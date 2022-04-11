@@ -142,6 +142,7 @@
   loop:
     - deepin-wine-tim
     - deepin-wine-wechat  # TODO: font needed
+    - wemeet-bin
     - zoom
     - wps-office-cn  # wps套件国内版
     - wps-office-mui-zh-cn  # wps中文语言包
