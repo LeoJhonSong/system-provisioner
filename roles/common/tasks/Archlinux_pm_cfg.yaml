@@ -1,0 +1,37 @@
+---
+# Configure pacman & install yay
+- name: Check if China mirrors ars used
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.d/mirrorlist
+    line: "## Country : China"
+    state: present
+  check_mode: true
+  register: check_mirrors
+- name: Use China mirrors if not using
+  ansible.builtin.command:
+    cmd: pacman-mirrors -c China -m rank
+  become: true
+  when: lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none
+- name: Add archlinuxcn to pacman.conf
+  ansible.builtin.blockinfile:
+    path: /etc/pacman.conf
+    block: |
+      [archlinuxcn]
+      SigLevel = Never
+      Server = https://repo.huaweicloud.com/archlinuxcn/$arch
+  become: true
+  register: archlinuxcn
+- name: Refresh packages list
+  ansible.builtin.pacman:
+    update_cache: true
+  become: true
+  when: (lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none) or
+    (lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none)
+- name: Install archlinuxcn-keyring, yay
+  ansible.builtin.pacman:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - archlinuxcn-keyring
+    - yay
+  become: true

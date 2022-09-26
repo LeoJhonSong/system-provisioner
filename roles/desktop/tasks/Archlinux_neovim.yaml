@@ -1,0 +1,10 @@
+---
+- name: Install nvim dependencies
+  ansible.builtin.pacman:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - neovim
+    - python-pynvim
+    - xclip
+  become: true

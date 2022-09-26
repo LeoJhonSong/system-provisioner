@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.yaml": "ansible"
+    },
+    "cSpell.words": [
+        "flameshot",
+        "optimus",
+    ],
+}

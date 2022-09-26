@@ -1,0 +1,4 @@
+---
+collections:
+  # Install collectios from Ansible Galaxy.
+  - name: kewlfft.aur

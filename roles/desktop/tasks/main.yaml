@@ -1,0 +1,35 @@
+---
+- name: Mount the Windows disk by label 'Windows'
+  ansible.posix.mount:
+    path: "{{ windows_mount_path }}"
+    src: LABEL=Windows
+    fstype: ntfs
+    state: mounted
+  become: true
+  tags: disk
+
+- name: Install basic softwares based on OS distribution
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_facts['distribution'] }}_basic_softwares.yaml"
+
+# Configure neovim
+- name: Install neovim and python, clipboard support depend on OS distribution
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_facts['distribution'] }}_neovim.yaml"
+- name: Download neovim config
+  ansible.builtin.git:
+    repo: https://github.com/LeoJhonSong/vimrc
+    dest: ~/.config/nvim
+  environment: "{{ proxy_env }}"
+- name: Link nvim to vim
+  ansible.builtin.file:
+    src: /usr/bin/nvim
+    dest: /usr/bin/vim
+    state: link
+  become: true
+
+# Install plenty of softwares based on OS distribution
+- name: Install plenty of softwares based on OS distribution
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_facts['distribution'] }}_additional_softwares.yaml"
+  tags: softwares
