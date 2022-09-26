@@ -39,18 +39,22 @@
     mode: 0644
 
 # Install pyenv
+- name: Find pyenv script
+  ansible.builtin.find:
+    paths: ~/.pyenv/
+  register: find_pyenv
 - name: Download pyenv install script
   ansible.builtin.get_url:
     url: https://pyenv.run
     dest: /tmp/install_pyenv.sh
     mode: 0755
-  when: lookup('ansible.builtin.fileglob', '~/.pyenv/bin/pyenv') | length == 0
+  when: find_pyenv.examined == 0
   environment: "{{ proxy_env }}"
 - name: Install pyenv
-  ansible.builtin.script: /tmp/install_pyenv.sh
-  args:
+  ansible.builtin.command:
+    cmd: /tmp/install_pyenv.sh
     creates: ~/.pyenv/bin/pyenv
-  when: lookup('ansible.builtin.fileglob', '~/.pyenv/bin/pyenv') | length == 0
+  when: find_pyenv.examined == 0
   environment: "{{ proxy_env }}"
 
 - name: Copy clang-format config
@@ -94,18 +98,22 @@
     dest: "{{ source_dir }}/roles/common/files/zsh/antigen.zsh"
     mode: u+x
   environment: "{{ proxy_env }}"
+- name: Find ohmyzsh files
+  ansible.builtin.find:
+    paths: ~/.oh-my-zsh/
+  register: find_ohmyzsh
 - name: Download oh-my-zsh install script if not installed
   ansible.builtin.get_url:
     url: https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh
     dest: /tmp/install.sh
     mode: u+x
-  when: lookup('ansible.builtin.fileglob', '~/.oh-my-zsh/oh-my-zsh.sh') | length == 0
+  when: find_ohmyzsh.examined
   environment: "{{ proxy_env }}"
 - name: Install oh-my-zsh
   ansible.builtin.command:
     cmd: /tmp/install.sh --unattended --keep-zshrc
   environment: "{{ proxy_env }}"
-  when: lookup('ansible.builtin.fileglob', '~/.oh-my-zsh/oh-my-zsh.sh') | length == 0
+  when: find_ohmyzsh.examined
 - name: Install plugins for zsh
   ansible.builtin.shell:
     executable: /usr/bin/zsh
