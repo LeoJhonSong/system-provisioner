@@ -7,11 +7,16 @@
     state: present
   check_mode: true
   register: check_mirrors
+- name: Read /etc/pacman.d/mirrorlist
+  ansible.builtin.slurp:
+    src: /etc/pacman.d/mirrorlist
+  register: mirrorlist
 - name: Use China mirrors if not using
   ansible.builtin.command:
     cmd: pacman-mirrors -c China -m rank
   become: true
-  when: lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none
+  when: mirrorlist['content'] | b64decode | regex_search('^## Country :\ China', multiline=True) is none
+  register: china_mirrors
 - name: Add archlinuxcn to pacman.conf
   ansible.builtin.blockinfile:
     path: /etc/pacman.conf
@@ -25,8 +30,7 @@
   ansible.builtin.pacman:
     update_cache: true
   become: true
-  when: (lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none) or
-    (lookup('ansible.builtin.file', '/etc/pacman.d/mirrorlist') | regex_search('^## Country :\ China', multiline=True) is none)
+  when: china_mirrors.changed or archlinuxcn.changed
 - name: Install archlinuxcn-keyring, yay
   ansible.builtin.pacman:
     name: "{{ item }}"

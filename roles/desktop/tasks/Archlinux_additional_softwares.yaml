@@ -141,19 +141,27 @@
     - nodejs
     - npm
     - jdk-openjdk
+- name: Read ~/.npmrc
+  ansible.builtin.slurp:
+    src: ~/.npmrc
+  register: npmrc
 - name: Change mirror source of npm
   ansible.builtin.command:
     cmd: npm config set registry https://registry.npm.taobao.org
-  when: lookup('ansible.builtin.file', '~/.npmrc') | regex_search('.*taobao.*', multiline=True) is none
+  when: npmrc['content'] | b64decode | regex_search('.*taobao.*', multiline=True) is none
 - name: Install yarn
   ansible.builtin.npm:
     name: yarn
     global: true
   become: true
+- name: Read ~/.yarnrc
+  ansible.builtin.slurp:
+    src: ~/.yarnrc
+  register: yarnrc
 - name: Change mirror source of yarn
   ansible.builtin.command:
     cmd: yarn config set registry https://registry.npm.taobao.org
-  when: lookup('ansible.builtin.file', '~/.yarnrc') | regex_search('.*taobao.*', multiline=True) is none
+  when: yarnrc['content'] | b64decode | regex_search('.*taobao.*', multiline=True) is none
 - name: Install office softwares
   kewlfft.aur.aur:
     name: "{{ item }}"

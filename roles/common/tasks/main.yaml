@@ -86,12 +86,17 @@
       - tmux
     state: present
   become: true
+- name: Read content of ~/.zshrc on remote machine
+  ansible.builtin.slurp:
+    src: ~/.zshrc
+  register: zshrc
 - name: Copy zsh local config
   ansible.builtin.copy:
     src: zsh/default.local.zsh
     dest: ~/.zshrc
     mode: 0644
-  when: lookup('ansible.builtin.file', '~/.zshrc') | regex_search('^export BACKUP_DIR=', multiline=True) is none
+    force: true
+  when: zshrc['content'] | b64decode | regex_search('^export BACKUP_DIR=', multiline=True) is none
 - name: Install antigen
   ansible.builtin.get_url:
     url: https://git.io/antigen
@@ -107,13 +112,13 @@
     url: https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh
     dest: /tmp/install.sh
     mode: u+x
-  when: find_ohmyzsh.examined
+  when: find_ohmyzsh.examined == 0
   environment: "{{ proxy_env }}"
 - name: Install oh-my-zsh
   ansible.builtin.command:
     cmd: /tmp/install.sh --unattended --keep-zshrc
   environment: "{{ proxy_env }}"
-  when: find_ohmyzsh.examined
+  when: find_ohmyzsh.examined == 0
 - name: Install plugins for zsh
   ansible.builtin.shell:
     executable: /usr/bin/zsh
