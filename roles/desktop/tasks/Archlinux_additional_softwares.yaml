@@ -73,13 +73,13 @@
   when: check_nvidia.stdout.find('command not found') != -1
 - name: Set graphic environment vars
   ansible.builtin.blockinfile:
-    path: ~/.pam_environment
+    path: ~/.xprofile
     create: true
     block: |
       # for fcitx input method
-      GTK_IM_MODULE DEFAULT=fcitx
-      QT_IM_MODULE DEFAULT=fcitx
-      XMODIFIERS DEFAULT=@im=fcitx
+      export GTK_IM_MODULE=fcitx
+      export QT_IM_MODULE=fcitx
+      export XMODIFIERS=@im=fcitx
     mode: 0644
 - name: Make sure aria2 config directory exists
   ansible.builtin.file:
