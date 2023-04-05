@@ -3,7 +3,9 @@
         "*.yaml": "ansible"
     },
     "cSpell.words": [
+        "eglexternalplatform",
         "flameshot",
-        "optimus",
+        "libxnvctrl",
+        "optimus"
     ],
 }

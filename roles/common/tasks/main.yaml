@@ -4,7 +4,7 @@
     file: "{{ ansible_facts['distribution'] }}_pm_cfg.yaml"
 
 - name: Configure git
-  ansible.builtin.git_config:
+  community.general.git_config:
     scope: global
     name: "{{ item.key }}"
     value: "{{ item.value }}"
@@ -20,6 +20,7 @@
   ansible.builtin.git:
     repo: https://github.com/LeoJhonSong/system-provisioner
     dest: "{{ source_dir }}"
+    version: HEAD # noqa: latest # see: https://ansible-lint.readthedocs.io/rules/latest/
     update: false # allow local changes
   environment: "{{ proxy_env }}"
 
@@ -28,7 +29,7 @@
   ansible.builtin.file:
     path: "~/.config/pip"
     state: directory
-    mode: 0755
+    mode: u=rwx,g=rx,o=rx
 - name: Overwrite pip.conf
   ansible.builtin.copy:
     dest: "~/.config/pip/pip.conf"
@@ -36,7 +37,7 @@
     content: |
       [global]
       index-url = https://mirrors.aliyun.com/pypi/simple/
-    mode: 0644
+    mode: u=rw,g=r,o=r
 
 # Install pyenv
 - name: Find pyenv script
@@ -47,7 +48,7 @@
   ansible.builtin.get_url:
     url: https://pyenv.run
     dest: /tmp/install_pyenv.sh
-    mode: 0755
+    mode: u+x
   when: find_pyenv.examined == 0
   environment: "{{ proxy_env }}"
 - name: Install pyenv
@@ -61,14 +62,14 @@
   ansible.builtin.copy:
     src: .clang-format
     dest: ~/.clang-format
-    mode: 0644
+    mode: u=rw,g=r,o=r
 
 # Configure zsh, tmux
 - name: Copy Wakatime config
   ansible.builtin.copy:
     src: .wakatime.cfg
     dest: ~/
-    mode: 0644
+    mode: u=rw
 - name: Install dependency for project detection of Wakatime
   ansible.builtin.shell:
     cmd: python3 -c "$(wget -q -O - https://raw.githubusercontent.com/wakatime/vim-wakatime/master/scripts/install_cli.py)"
@@ -78,7 +79,7 @@
   ansible.builtin.copy:
     src: .pythonrc.py
     dest: ~/
-    mode: 0644
+    mode: u=rw,g=r,o=r
 - name: Install zsh, tmux
   ansible.builtin.package:
     name:
@@ -94,15 +95,9 @@
   ansible.builtin.copy:
     src: zsh/default.local.zsh
     dest: ~/.zshrc
-    mode: 0644
+    mode: u=rw,g=r,o=r
     force: true
-  when: zshrc['content'] | b64decode | regex_search('^export BACKUP_DIR=', multiline=True) is none
-- name: Install antigen
-  ansible.builtin.get_url:
-    url: https://git.io/antigen
-    dest: "{{ source_dir }}/roles/common/files/zsh/antigen.zsh"
-    mode: u+x
-  environment: "{{ proxy_env }}"
+  when: zshrc['content'] | b64decode | regex_search('^export BACKUP_DIR=', multiline=True) is none # content given by slurp is base64 encoded
 - name: Find ohmyzsh files
   ansible.builtin.find:
     paths: ~/.oh-my-zsh/
@@ -117,12 +112,15 @@
 - name: Install oh-my-zsh
   ansible.builtin.command:
     cmd: /tmp/install.sh --unattended --keep-zshrc
+  changed_when: true
   environment: "{{ proxy_env }}"
   when: find_ohmyzsh.examined == 0
 - name: Install plugins for zsh
   ansible.builtin.shell:
     executable: /usr/bin/zsh
     cmd: source ~/.zshrc
+  register: install_zsh_plugin
+  changed_when: install_zsh_plugin.stdout | regex_search('.*Installing.*', multiline=True) is not none
   environment: "{{ proxy_env }}"
 - name: Link tmux config
   ansible.builtin.file:

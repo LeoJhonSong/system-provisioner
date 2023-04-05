@@ -1,16 +1,15 @@
 ---
 - name: Install basics
-  ansible.builtin.pacman:
-    name: "{{ item }}"
-    state: present
   become: true
-  loop:
-    - base-devel
-    - cmake
-    - clang
-    - bat
-    - ccze
-    - lsd
-    - ranger
-    - fd
-    - nmap
+  community.general.pacman:
+    state: present
+    name:
+      - base-devel
+      - cmake
+      - clang
+      - bat
+      - ccze
+      - lsd
+      - ranger
+      - fd
+      - nmap

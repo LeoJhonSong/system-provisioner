@@ -1,7 +1,25 @@
 ---
+# yay drequires a sudoer but not root to do operations, if the sudoer needs a
+# password, a aur task would stuck at asking for password. therefore create a
+# sudoer without password to do AUR packages installation.
+- name: Create a `aur_builder` user
+  ansible.builtin.user:
+    name: aur_builder
+    create_home: true
+    group: wheel
+  become: true
+- name: Allow the `aur_builder` user to run `sudo pacman` without a password
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/11-install-aur_builder
+    line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+    create: true
+    validate: 'visudo -cf %s'
+    mode: u=r,g=r,o=
+  become: true
+
 # Install docker and start service
 - name: Install docker
-  ansible.builtin.pacman:
+  community.general.pacman:
     name: docker
     state: present
   become: true
@@ -10,6 +28,7 @@
     name: docker
     enabled: true
     state: started
+  become: true
 - name: Add user to docker group
   ansible.builtin.user:
     name: "{{ ansible_user_id }}"
@@ -17,28 +36,30 @@
     append: true
   become: true
 
+- name: Install python setuptools as a dependency of ansible.builtin.pip
+  community.general.pacman:
+    name: python-setuptools
+    state: present
+  become: true
 - name: Install compiledb  # for compile_commands.json generation for make projects
   ansible.builtin.pip:
     name: compiledb
+    extra_args: -i https://pypi.tuna.tsinghua.edu.cn/simple
 - name: Make sure fd directory exist
   ansible.builtin.file:
     path: "~/.config/fd"
     state: directory
-    mode: 0755
+    mode: u=rwx,g=rx,o=rx
 - name: Link fd ignore file
   ansible.builtin.file:
     src: "{{ source_dir }}/roles/common/files/fd/ignore"
     dest: ~/.config/fd/ignore
     state: link
-- name: Install fzf, with compeletion, with keybinding, no zshrc change
-  ansible.builtin.shell:
-    cmd: |
-      git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-      ~/.fzf/install --key-bindings --completion --no-update-rc
 - name: Install Sypatics touchpad driver
-  kewlfft.aur.aur:
+  community.general.pacman:
     name: xf86-input-synaptics
     state: present
+  become: true
 - name: Synaptics touchpad config
   ansible.builtin.copy:
     dest: /etc/X11/xorg.conf.d/30-touchpad.conf
@@ -49,18 +70,23 @@
           MatchIsTouchpad "on"
           Option "AccelFactor" "0.20"
       EndSection
-    mode: 0644
+    mode: u=rw,g=r,o=r
   become: true
-- name: Check if has NVIDIA driver
-  ansible.builtin.command:
-    cmd: nvidia-smi
-  ignore_errors: true
-  register: check_nvidia
+- name: Check if has nvidia-settings
+  community.general.pacman:
+    name: nvidia-settings
+    state: present
+  check_mode: true
+  register: has_nvidia_settings
+  changed_when: has_nvidia_settings.packages | length > 0
 - name: Install graphic card manager
   kewlfft.aur.aur:
     name: optimus-manager-qt
     state: present
-  when: check_nvidia.stdout.find('command not found') != -1
+  environment: "{{ proxy_env }}"
+  become: true
+  become_user: aur_builder
+  when: not has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Optimus manager config  # see: https://github.com/Askannz/optimus-manager#important--manjaro-kde-users
   ansible.builtin.replace:
     path: /etc/sddm.conf
@@ -70,7 +96,7 @@
     - DisplayCommand
     - DisplayStopCommand
   become: true
-  when: check_nvidia.stdout.find('command not found') != -1
+  when: not has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Set graphic environment vars
   ansible.builtin.blockinfile:
     path: ~/.xprofile
@@ -80,122 +106,120 @@
       export GTK_IM_MODULE=fcitx
       export QT_IM_MODULE=fcitx
       export XMODIFIERS=@im=fcitx
-    mode: 0644
+      # override QT style of applications like dolphin, kate
+      export QT_STYLE_OVERRIDE=kvantum
+    mode: u=rw,g=r,o=r
 - name: Make sure aria2 config directory exists
   ansible.builtin.file:
     path: ~/.config/aria2/
     state: directory
-    mode: 0755
+    mode: u=rwx,g=rx,o=rx
 - name: Copy aria2 config
   ansible.builtin.copy:
     src: aria2.conf
     dest: ~/.config/aria2/
-    mode: 0644
+    mode: u=rw,g=r,o=r
 - name: Install input method
-  kewlfft.aur.aur:
-    name: "{{ item }}"
+  become: true
+  community.general.pacman:
     state: present
-  loop:
-    - fcitx5-im
-    - fcitx5-material-color
-    - fcitx5-chinese-addons
+    name:
+      - fcitx5-im
+      - fcitx5-material-color
+      - fcitx5-chinese-addons
 - name: Install desktop softwares
-  kewlfft.aur.aur:
-    name: "{{ item }}"
+  become: true
+  community.general.pacman:
     state: present
-  loop:
-    # system
-    - kvantum-qt5
-    - latte-dock
-    # developing
-    - google-chrome
-    - typora-free
-    - visual-studio-code-bin
-    - github-desktop-bin
-    # record/show
-    - flameshot
-    - peek
-    - simplescreenrecorder
-    - screenkey
-    # graphics
-    - vlc
-    - handbrake
-    - kdenlive
-    - jpegoptim
-    - optipng
-    - ghostscript
-    # remote access
-    - manjaro-settings-samba
-    - filezilla
-    - sshfs
-    # - frpc/frps
-    - remmina
-    - freerdp
-    # other
-    - curl
-    - wget
-    - autojump
-    - ventoy-bin
-    - aria2
-    - minicom
-    - nodejs
-    - npm
-    - jdk-openjdk
-- name: Read ~/.npmrc
-  ansible.builtin.slurp:
-    src: ~/.npmrc
-  register: npmrc
+    name:
+      # system
+      - kvantum
+      # record/show
+      - flameshot
+      - peek
+      - simplescreenrecorder
+      - screenkey
+      # graphics
+      - vlc
+      - handbrake
+      - kdenlive
+      - jpegoptim
+      - optipng
+      - ghostscript
+      # remote access
+      - manjaro-settings-samba
+      - filezilla
+      - sshfs
+      # - frpc/frps
+      - remmina
+      - freerdp
+      # other
+      - curl
+      - wget
+      - autojump
+      - fzf
+      - ventoy-bin
+      - aria2
+      - minicom
+      - nodejs
+      - npm
+      - jdk-openjdk
+- name: Install extra desktop softwares from AUR
+  become: true
+  become_user: aur_builder
+  environment: "{{ proxy_env }}"
+  ignore_errors: true
+  register: install_result1
+  kewlfft.aur.aur:
+    state: present
+    name:
+      # developing
+      - microsoft-edge-dev-bin
+      - typora-free
+      - visual-studio-code-bin
+      - kate-wakatime-git
+      - github-desktop-bin
 - name: Change mirror source of npm
   ansible.builtin.command:
     cmd: npm config set registry https://registry.npm.taobao.org
-  when: npmrc['content'] | b64decode | regex_search('.*taobao.*', multiline=True) is none
+  changed_when: true
 - name: Install yarn
-  ansible.builtin.npm:
+  community.general.npm:
     name: yarn
     global: true
   become: true
-- name: Read ~/.yarnrc
-  ansible.builtin.slurp:
-    src: ~/.yarnrc
-  register: yarnrc
 - name: Change mirror source of yarn
   ansible.builtin.command:
     cmd: yarn config set registry https://registry.npm.taobao.org
-  when: yarnrc['content'] | b64decode | regex_search('.*taobao.*', multiline=True) is none
-- name: Install office softwares
+  changed_when: true
+- name: Install office softwares from AUR
   kewlfft.aur.aur:
     name: "{{ item }}"
     state: present
+  become: true
+  become_user: aur_builder
+  environment: "{{ proxy_env }}"
+  ignore_errors: true
+  register: install_result2
   loop:
-    - deepin-wine-tim
+    - linuxqq
     - deepin-wine-wechat
+    - onedrivegui
+    - zotero-bin
     - wemeet-bin
     - zoom
     - wps-office-cn  # wps套件国内版
     - wps-office-mui-zh-cn  # wps中文语言包
     - ttf-wps-fonts  # wps需要的字体和符号
     - wps-office-mime-cn  # wps mime types
-  environment: "{{ proxy_env }}"
-- name: Make sure ~/.config/zoomus.conf exists
-  ansible.builtin.shell:
-    cmd: |
-      zoom &
-      pkill zoom
-    creates: ~/.config/zoomus.conf
-- name: Configure zoom scale
-  ansible.builtin.lineinfile:
-    path: ~/.config/zoomus.conf
-    regexp: '^autoScale'
-    line: autoScale=false
 - name: Install TexLive
-  kewlfft.aur.aur:
-    name: "{{ item }}"
+  community.general.pacman:
+    name:
+      - texlive-most
+      - texlive-lang
+      - biber
     state: present
-  loop:
-    - texlive-most
-    - texlive-lang
-    - biber
-  environment: "{{ proxy_env }}"
+  become: true
 - name: Install dependency for code syntax hihglight in latex
   ansible.builtin.pip:
     name: pygments
@@ -204,14 +228,14 @@
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: ~/.config/autostart/
-    mode: 0644
+    mode: u=rw,g=r,o=r
   loop:
     - /usr/share/applications/org.flameshot.Flameshot.desktop
 - name: Set autostart scripts
   ansible.builtin.copy:
     content: "{{ item.content }}"
     dest: ~/.config/autostart/{{ item.filename }}
-    mode: 0644
+    mode: u=rw,g=r,o=r
   loop:
     - filename: aria2.desktop
       content: |

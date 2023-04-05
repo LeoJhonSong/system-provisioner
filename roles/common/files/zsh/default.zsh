@@ -21,7 +21,7 @@ if [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]]; then
     source $ZSH/oh-my-zsh.sh
 fi
 
-# set terminal color
+# enable true color
 export TERM=xterm-256color
 
 # colored GCC warnings and errors
@@ -47,7 +47,7 @@ command -v lsd &> /dev/null && alias ls='lsd'
 alias p='python'
 
 # fzf config and initial
-if [ -f ~/.fzf.zsh ]; then
+if command -v fzf &> /dev/null; then
     export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow"
     # export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude $FD_EXCLUDES"
     export FZF_COMPLETION_TRIGGER=']'
@@ -77,7 +77,8 @@ if [ -f ~/.fzf.zsh ]; then
             *)              fzf "$@" ;;
         esac
     }
-    source ~/.fzf.zsh
+    [[ $- == *i* ]] && source /usr/share/fzf/completion.zsh 2> /dev/null # load auto-completion
+    source /usr/share/fzf/key-bindings.zsh # load keybindings
 fi
 
 # navi widget install (keybinding: Ctrl-G)

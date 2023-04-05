@@ -17,6 +17,7 @@
   become: true
   when: mirrorlist['content'] | b64decode | regex_search('^## Country :\ China', multiline=True) is none
   register: china_mirrors
+  changed_when: true
 - name: Add archlinuxcn to pacman.conf
   ansible.builtin.blockinfile:
     path: /etc/pacman.conf
@@ -27,15 +28,14 @@
   become: true
   register: archlinuxcn
 - name: Refresh packages list
-  ansible.builtin.pacman:
+  community.general.pacman:
     update_cache: true
   become: true
-  when: china_mirrors.changed or archlinuxcn.changed
+  when: china_mirrors.changed or archlinuxcn.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Install archlinuxcn-keyring, yay
-  ansible.builtin.pacman:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - archlinuxcn-keyring
-    - yay
   become: true
+  community.general.pacman:
+    name:
+      - archlinuxcn-keyring
+      - yay
+    state: present

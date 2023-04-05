@@ -20,6 +20,8 @@
   ansible.builtin.git:
     repo: https://github.com/LeoJhonSong/vimrc
     dest: ~/.config/nvim
+    version: HEAD # noqa: latest # see: https://ansible-lint.readthedocs.io/rules/latest/
+    update: false # allow local changes
   environment: "{{ proxy_env }}"
 - name: Link nvim to vim
   ansible.builtin.file:

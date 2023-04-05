@@ -1,10 +1,10 @@
 ---
 - name: Basic setup
-  hosts: localhost, all
+  hosts: all
   roles:
-  - common
+    - common
 
 - name: Provision desktop systems
-  hosts: localhost, desktop
+  hosts: desktop
   roles:
-  - desktop
+    - desktop

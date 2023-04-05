@@ -2,6 +2,7 @@
 local_docker ansible_ssh_host=127.0.0.1 ansible_ssh_port=22 ansible_ssh_user=test
 
 [desktop]
+localhost
 
 [board]
 leo-rpi4.local
