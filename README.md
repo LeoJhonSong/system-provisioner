@@ -42,7 +42,15 @@ ansible-playbook site.yaml -l localhost --tags disk --connection=local
 ## Postcondition
 
 - check **Hardware clock in local time zone** in `Manjaro Settings Manager > Time and Date`
+
 - set shortcuts in system settings
+
+- [set proxy for onedrive](https://github.com/abraunegg/onedrive/blob/master/docs/USAGE.md#access-onedrive-service-through-a-proxy). Edit systemd service of onedrive with `sudo -e /usr/lib/systemd/user/onedrive.service` and add following two lines under **[Service]** section:
+
+  ```sh
+  Environment="HTTP_PROXY=http://127.0.0.1:7890"
+  Environment="HTTPS_PROXY=http://127.0.0.1:7890"
+  ```
 
 ## Tips
 
