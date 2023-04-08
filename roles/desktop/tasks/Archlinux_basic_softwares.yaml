@@ -4,12 +4,30 @@
   community.general.pacman:
     state: present
     name:
-      - base-devel
-      - cmake
-      - clang
+      # folder/file explore
       - bat
       - ccze
       - lsd
+      - autojump
       - ranger
       - fd
+      - fzf
+      # develop
+      - base-devel
+      - cmake
+      - clang
+      - bear # generate compile_commands.json for make projects
+      # network
       - nmap
+      - curl
+      - wget
+- name: Make sure fd directory exist
+  ansible.builtin.file:
+    path: "~/.config/fd"
+    state: directory
+    mode: u=rwx,g=rx,o=rx
+- name: Link fd ignore file
+  ansible.builtin.file:
+    src: "{{ source_dir }}/roles/common/files/fd/ignore"
+    dest: ~/.config/fd/ignore
+    state: link

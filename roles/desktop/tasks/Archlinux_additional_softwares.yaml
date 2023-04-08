@@ -36,25 +36,6 @@
     append: true
   become: true
 
-- name: Install python setuptools as a dependency of ansible.builtin.pip
-  community.general.pacman:
-    name: python-setuptools
-    state: present
-  become: true
-- name: Install compiledb  # for compile_commands.json generation for make projects
-  ansible.builtin.pip:
-    name: compiledb
-    extra_args: -i https://pypi.tuna.tsinghua.edu.cn/simple
-- name: Make sure fd directory exist
-  ansible.builtin.file:
-    path: "~/.config/fd"
-    state: directory
-    mode: u=rwx,g=rx,o=rx
-- name: Link fd ignore file
-  ansible.builtin.file:
-    src: "{{ source_dir }}/roles/common/files/fd/ignore"
-    dest: ~/.config/fd/ignore
-    state: link
 - name: Install Sypatics touchpad driver
   community.general.pacman:
     name: xf86-input-synaptics
@@ -119,7 +100,7 @@
     src: aria2.conf
     dest: ~/.config/aria2/
     mode: u=rw,g=r,o=r
-- name: Install input method
+- name: Install Chinese input method
   become: true
   community.general.pacman:
     state: present
@@ -154,10 +135,6 @@
       - remmina
       - freerdp
       # other
-      - curl
-      - wget
-      - autojump
-      - fzf
       - ventoy-bin
       - aria2
       - minicom
@@ -173,7 +150,7 @@
   kewlfft.aur.aur:
     state: present
     name:
-      # developing
+      # development
       - microsoft-edge-dev-bin
       - typora-free
       - visual-studio-code-bin
@@ -218,11 +195,9 @@
       - texlive-most
       - texlive-lang
       - biber
+      - python-pygments
     state: present
   become: true
-- name: Install dependency for code syntax hihglight in latex
-  ansible.builtin.pip:
-    name: pygments
 
 - name: Set autostart applications
   ansible.builtin.copy:
