@@ -87,6 +87,8 @@
       export GTK_IM_MODULE=fcitx
       export QT_IM_MODULE=fcitx
       export XMODIFIERS=@im=fcitx
+      # override QT scale
+      export QT_SCREEN_SCALE_FACTORS=1
       # override QT style of applications like dolphin, kate
       export QT_STYLE_OVERRIDE=kvantum
     mode: u=rw,g=r,o=r
