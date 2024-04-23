@@ -6,12 +6,12 @@
     regexp: 'http:\/\/deb\.debian\.org'
     replace: 'http://mirrors.ustc.edu.cn'
   become: true
-- name: Change Debian Security source to USTC
-  ansible.builtin.replace:
-    path: /etc/apt/sources.list
-    regexp: 'http:\/\/security\.debian\.org\/debian-security'
-    replace: 'http://mirrors.ustc.edu.cn/debian-security'
-  become: true
+# - name: Change Debian Security source to USTC
+#   ansible.builtin.replace:
+#     path: /etc/apt/sources.list
+#     regexp: 'http:\/\/security\.debian\.org\/debian-security'
+#     replace: 'http://mirrors.ustc.edu.cn/debian-security'
+#   become: true
 - name: Refresh packages list
   ansible.builtin.apt:
     update_cache: true
