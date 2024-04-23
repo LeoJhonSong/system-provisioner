@@ -137,6 +137,7 @@
       - remmina
       - freerdp
       # other
+      - rar
       - ventoy-bin
       - aria2
       - minicom
@@ -158,6 +159,8 @@
       - visual-studio-code-bin
       - kate-wakatime-git
       - github-desktop-bin
+      # remote
+      - sunloginclient
 - name: Change mirror source of npm
   ansible.builtin.command:
     cmd: npm config set registry https://registry.npm.taobao.org
@@ -208,6 +211,7 @@
     mode: u=rw,g=r,o=r
   loop:
     - /usr/share/applications/org.flameshot.Flameshot.desktop
+    - /usr/share/applications/onedrivegui.desktop
 - name: Set autostart scripts
   ansible.builtin.copy:
     content: "{{ item.content }}"
