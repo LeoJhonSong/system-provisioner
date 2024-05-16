@@ -1,3 +1,6 @@
+# force UTF-8 encoding
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 # Path to your oh-my-zsh installation.
 if [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]]; then
     export ZSH=~/.oh-my-zsh
