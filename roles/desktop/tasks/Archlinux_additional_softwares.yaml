@@ -197,7 +197,7 @@
 - name: Install TexLive
   community.general.pacman:
     name:
-      - texlive-most
+      - texlive-basic # https://archlinux.org/news/tex-live-package-reorganization/
       - texlive-lang
       - biber
       - python-pygments
