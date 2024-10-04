@@ -18,15 +18,15 @@
   when: mirrorlist['content'] | b64decode | regex_search('^## Country :\ China', multiline=True) is none
   register: china_mirrors
   changed_when: true
-- name: Add archlinuxcn to pacman.conf
-  ansible.builtin.blockinfile:
-    path: /etc/pacman.conf
-    block: |
-      [archlinuxcn]
-      SigLevel = Never
-      Server = https://repo.huaweicloud.com/archlinuxcn/$arch
-  become: true
-  register: archlinuxcn
+# - name: Add archlinuxcn to pacman.conf
+#   ansible.builtin.blockinfile:
+#     path: /etc/pacman.conf
+#     block: |
+#       [archlinuxcn]
+#       SigLevel = Never
+#       Server = https://repo.huaweicloud.com/archlinuxcn/$arch
+#   become: true
+#   register: archlinuxcn
 - name: Refresh packages list
   community.general.pacman:
     update_cache: true
