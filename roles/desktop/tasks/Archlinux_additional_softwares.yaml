@@ -97,11 +97,11 @@
     path: ~/.config/aria2/
     state: directory
     mode: u=rwx,g=rx,o=rx
-- name: Copy aria2 config
-  ansible.builtin.copy:
+- name: Create a symlink for aria2 config
+  ansible.builtin.file:
     src: aria2.conf
-    dest: ~/.config/aria2/
-    mode: u=rw,g=r,o=r
+    dest: ~/.config/aria2/aria2.conf
+    state: link
 - name: Install Chinese input method
   become: true
   community.general.pacman:
@@ -117,18 +117,30 @@
     name:
       # system
       - kvantum
+      - wine
+      - winetricks
       # record/show
       - flameshot
       - peek
       - simplescreenrecorder
       - screenkey
       # graphics
-      - vlc
-      - handbrake
-      - kdenlive
+      - drawio-desktop
+      - gimp
+      - inkscape
       - jpegoptim
       - optipng
       - ghostscript
+      # video
+      - vlc
+      - handbrake
+      - kdenlive
+      - davinci-resolve # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
+      # audio
+      - deadbeef
+      - deadbeef-plugin-customizabletb-gtk3-git
+      # - deadbeef-plugin-spectrogram-gtk3-git
+      - deadbeef-plugin-waveform-gtk3-git
       # remote access
       - manjaro-settings-samba
       - filezilla
@@ -140,7 +152,7 @@
       - rar
       - ventoy-bin
       - aria2
-      - minicom
+      - python-comtool # Serial/Network Debugging Tool
       - nodejs
       - npm
       - jdk-openjdk
@@ -185,9 +197,11 @@
   register: install_result2
   loop:
     - linuxqq
-    - deepin-wine-wechat
-    - onedrivegui
-    - zotero-bin
+    - wechat-bin
+    - feishu-bin
+    - onedrive-abraunegg
+    - onedrivegui-git
+    - zotero-beta-bin
     - wemeet-bin
     - zoom
     - wps-office-cn  # wps套件国内版
@@ -236,3 +250,14 @@
         Path=
         Type=Application
         X-KDE-AutostartScript=true
+    - filename: remmina-applet.desktop
+      content: |
+        [Desktop Entry]
+        Version=1.0
+        Name=Remmina Applet
+        Comment=Connect to remote desktops through the applet menu
+        Icon=org.remmina.Remmina
+        Exec=remmina -i
+        Terminal=false
+        Type=Application
+        Hidden=false
