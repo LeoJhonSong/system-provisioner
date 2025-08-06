@@ -8,5 +8,5 @@
         "libxnvctrl",
         "optimus"
     ],
-    "ansible.python.interpreterPath": "/home/leo/.pyenv/versions/base/bin/python",
+    "ansible.python.interpreterPath": "/usr/bin/python",
 }

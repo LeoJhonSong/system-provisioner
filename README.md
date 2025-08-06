@@ -8,7 +8,9 @@ A playbook to set up my PC/board/server of different Linux distributions (mainly
 ### Install dependencies
 
 ```shell
+# select China mirrors
 sudo pacman-mirrors -i -c China -m rank
+# update mirrors
 sudo pacman -Syy
 sudo pacman -S ansible
 ```
@@ -20,9 +22,24 @@ sudo pacman -S ansible
 
 To install them from Ansible Galaxy, run `ansible-galaxy collection install -r ./requirements.yaml`, or `ansible-galaxy collection install kewlfft.aur` to just install kewlfft.aur.
 
+### turn off password timeout
+
+add line `Defaults passwd_timeout=0` to end of `/etc/sudoers` with `sudo visudo /etc/sudoers`
+
+### enable avahi and sshd if remote access with ssh
+
+```sh
+sudo systemctl enable --now avahi-daemon sshd
+```
+
 ### proxy
 
-To run from localhost in China, install [ShellClash](https://github.com/juewuy/ShellClash) or other proxy client and start it.
+To run from localhost in China, install [ShellCrash](https://github.com/juewuy/ShellCrash) or other proxy client and start it.
+
+```sh
+sudo -i # switch to root user
+export url='https://fastly.jsdelivr.net/gh/juewuy/ShellCrash@master' && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh  && bash /tmp/install.sh && source /etc/profile &> /dev/null
+```
 
 ## Usage
 

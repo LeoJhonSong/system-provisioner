@@ -6,14 +6,13 @@
     name:
       # folder/file explore
       - bat
-      - ccze
       - lsd
-      - autojump
       - yazi
       - fd
       - fzf
       # develop
       - base-devel
+      - gdb
       - cmake
       - clang
       - bear # generate compile_commands.json for make projects

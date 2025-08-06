@@ -2,5 +2,5 @@ proxy_env:
   http_proxy: "{{ ansible_env['SSH_CLIENT'].split() | first }}:7890"
   https_proxy: "{{ ansible_env['SSH_CLIENT'].split() | first }}:7890"
 
-source_dir: ~/Desktop/system-provisioner
+source_dir: ~/projects/system-provisioner
 windows_mount_path: /run/media/Windows

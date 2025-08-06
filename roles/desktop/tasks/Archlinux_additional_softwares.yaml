@@ -23,6 +23,8 @@
     name: docker
     state: present
   become: true
+
+# FIXME: only docker.socket exist before this
 - name: Start docker service and set to auto start
   ansible.builtin.service:
     name: docker
@@ -36,23 +38,6 @@
     append: true
   become: true
 
-- name: Install Sypatics touchpad driver
-  community.general.pacman:
-    name: xf86-input-synaptics
-    state: present
-  become: true
-- name: Synaptics touchpad config
-  ansible.builtin.copy:
-    dest: /etc/X11/xorg.conf.d/30-touchpad.conf
-    content: |
-      Section "InputClass"
-          Identifier "touchpad"
-          Driver "synaptics"
-          MatchIsTouchpad "on"
-          Option "AccelFactor" "0.20"
-      EndSection
-    mode: u=rw,g=r,o=r
-  become: true
 - name: Check if has nvidia-settings
   community.general.pacman:
     name: nvidia-settings
@@ -99,7 +84,7 @@
     mode: u=rwx,g=rx,o=rx
 - name: Create a symlink for aria2 config
   ansible.builtin.file:
-    src: aria2.conf
+    src: "{{ source_dir }}/roles/desktop/files/aria2.conf"
     dest: ~/.config/aria2/aria2.conf
     state: link
 - name: Install Chinese input method
@@ -122,12 +107,12 @@
       # record/show
       - flameshot
       - peek
-      - simplescreenrecorder
       - screenkey
       # graphics
       - drawio-desktop
       - gimp
       - inkscape
+      - blender
       - jpegoptim
       - optipng
       - ghostscript
@@ -135,12 +120,6 @@
       - vlc
       - handbrake
       - kdenlive
-      - davinci-resolve # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
-      # audio
-      - deadbeef
-      - deadbeef-plugin-customizabletb-gtk3-git
-      # - deadbeef-plugin-spectrogram-gtk3-git
-      - deadbeef-plugin-waveform-gtk3-git
       # remote access
       - manjaro-settings-samba
       - filezilla
@@ -149,13 +128,11 @@
       - remmina
       - freerdp
       # other
-      - rar
-      - ventoy-bin
       - aria2
-      - python-comtool # Serial/Network Debugging Tool
       - nodejs
       - npm
       - jdk-openjdk
+      - gparted
 - name: Install extra desktop softwares from AUR
   become: true
   become_user: aur_builder
@@ -165,14 +142,30 @@
   kewlfft.aur.aur:
     state: present
     name:
+      # basic
+      - rar
+      - ccze
+      # record/show
+      - simplescreenrecorder
+      # video
+      - davinci-resolve # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
+      # audio
+      - audiorelay
+      - deadbeef
+      - deadbeef-plugin-customizabletb-gtk3-git
+      # - deadbeef-plugin-spectrogram-gtk3-git
+      - deadbeef-plugin-waveform-gtk3-git
       # development
-      - microsoft-edge-dev-bin
+      - microsoft-edge-stable-bin
       - typora-free
       - visual-studio-code-bin
       - kate-wakatime-git
       - github-desktop-bin
       # remote
       - sunloginclient
+      # other
+      - ventoy-bin
+      - python-comtool # Serial/Network Debugging Tool
 - name: Change mirror source of npm
   ansible.builtin.command:
     cmd: npm config set registry https://registry.npm.taobao.org
@@ -208,11 +201,20 @@
     - wps-office-mui-zh-cn  # wps中文语言包
     - ttf-wps-fonts  # wps需要的字体和符号
     - wps-office-mime-cn  # wps mime types
-- name: Install TexLive
+- name: Install LaTeX softwares
   community.general.pacman:
     name:
       - texlive-basic # https://archlinux.org/news/tex-live-package-reorganization/
       - texlive-lang
+      - texlive-xetex
+      - texlive-luatex
+      - texlive-latexextra
+      - texlive-plaingeneric
+      - texlive-bibtexextra
+      - texlive-mathscience
+      - texlive-binextra
+      - perl-yaml-tiny # 这两个是latexindent依赖
+      - perl-file-homedir
       - biber
       - python-pygments
     state: present
@@ -221,11 +223,12 @@
 - name: Set autostart applications
   ansible.builtin.copy:
     src: "{{ item }}"
+    remote_src: true
     dest: ~/.config/autostart/
     mode: u=rw,g=r,o=r
   loop:
     - /usr/share/applications/org.flameshot.Flameshot.desktop
-    - /usr/share/applications/onedrivegui.desktop
+    - /usr/share/applications/OneDriveGUI.desktop
 - name: Set autostart scripts
   ansible.builtin.copy:
     content: "{{ item.content }}"
@@ -235,7 +238,7 @@
     - filename: aria2.desktop
       content: |
         [Desktop Entry]
-        Exec=/home/{{ ansible_user_id }}/Desktop/Shell-Scripts/aria2
+        Exec=/home/{{ ansible_user_id }}/projects/Shell-Scripts/aria2
         Icon=dialog-scripts
         Name=aria2
         Path=
@@ -244,7 +247,7 @@
     - filename: clash-dashboard.desktop
       content: |
         [Desktop Entry]
-        Exec=/home/{{ ansible_user_id }}/Desktop/Shell-Scripts/clash-dashboard
+        Exec=/home/{{ ansible_user_id }}/projects/Shell-Scripts/clash-dashboard
         Icon=dialog-scripts
         Name=clash-dashboard
         Path=
