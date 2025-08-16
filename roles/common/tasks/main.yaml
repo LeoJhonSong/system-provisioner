@@ -43,19 +43,19 @@
 - name: Find pyenv script
   ansible.builtin.find:
     paths: ~/.pyenv/
-  register: find_pyenv
+  register: common_find_pyenv
 - name: Download pyenv install script
   ansible.builtin.get_url:
     url: https://pyenv.run
     dest: /tmp/install_pyenv.sh
     mode: u+x
-  when: find_pyenv.examined == 0
+  when: common_find_pyenv.examined == 0
   environment: "{{ proxy_env }}"
 - name: Install pyenv
   ansible.builtin.command:
     cmd: /tmp/install_pyenv.sh
     creates: ~/.pyenv/bin/pyenv
-  when: find_pyenv.examined == 0
+  when: common_find_pyenv.examined == 0
   environment: "{{ proxy_env }}"
 
 - name: Copy clang-format config
@@ -90,37 +90,37 @@
 - name: Read content of ~/.zshrc on remote machine
   ansible.builtin.slurp:
     src: ~/.zshrc
-  register: zshrc
+  register: common_zshrc
 - name: Copy zsh local config
   ansible.builtin.copy:
     src: zsh/default.local.zsh
     dest: ~/.zshrc
     mode: u=rw,g=r,o=r
     force: true
-  when: zshrc['content'] | b64decode | regex_search('^export BACKUP_DIR=', multiline=True) is none # content given by slurp is base64 encoded
+  when: common_zshrc['content'] | b64decode | regex_search('^export BACKUP_DIR=', multiline=True) is none # content given by slurp is base64 encoded
 - name: Find ohmyzsh files
   ansible.builtin.find:
     paths: ~/.oh-my-zsh/
-  register: find_ohmyzsh
+  register: common_find_ohmyzsh
 - name: Download oh-my-zsh install script if not installed
   ansible.builtin.get_url:
     url: https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh
     dest: /tmp/install.sh
     mode: u+x
-  when: find_ohmyzsh.examined == 0
+  when: common_find_ohmyzsh.examined == 0
   environment: "{{ proxy_env }}"
 - name: Install oh-my-zsh
   ansible.builtin.command:
     cmd: /tmp/install.sh --unattended --keep-zshrc
   changed_when: true
   environment: "{{ proxy_env }}"
-  when: find_ohmyzsh.examined == 0
+  when: common_find_ohmyzsh.examined == 0
 - name: Install plugins for zsh
   ansible.builtin.shell:
     executable: /usr/bin/zsh
     cmd: source ~/.zshrc
-  register: install_zsh_plugin
-  changed_when: install_zsh_plugin.stdout | regex_search('.*Installing.*', multiline=True) is not none
+  register: common_install_zsh_plugin
+  changed_when: common_install_zsh_plugin.stdout | regex_search('.*Installing.*', multiline=True) is not none
   environment: "{{ proxy_env }}"
 - name: Link tmux config
   ansible.builtin.file:

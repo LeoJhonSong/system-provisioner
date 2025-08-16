@@ -6,7 +6,9 @@
         "eglexternalplatform",
         "flameshot",
         "libxnvctrl",
-        "optimus"
+        "ohmyzsh",
+        "optimus",
+        "pythonrc"
     ],
     "ansible.python.interpreterPath": "/usr/bin/python",
 }

@@ -1,3 +1,6 @@
+# Force IPv4 connections for all hosts, so that we can extract ip from ansible_env['SSH_CLIENT']
+ansible_ssh_common_args: '-o AddressFamily=inet'
+
 proxy_env:
   http_proxy: "{{ ansible_env['SSH_CLIENT'].split() | first }}:7890"
   https_proxy: "{{ ansible_env['SSH_CLIENT'].split() | first }}:7890"
