@@ -5,6 +5,7 @@
     state: present
     name:
       # folder/file explore
+      # FIXME: may need to move some of them to common task
       - bat
       - lsd
       - yazi
