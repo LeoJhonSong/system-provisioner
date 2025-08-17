@@ -43,8 +43,8 @@
     name: nvidia-settings
     state: present
   check_mode: true
-  register: has_nvidia_settings
-  changed_when: has_nvidia_settings.packages | length > 0
+  register: desktop_has_nvidia_settings
+  changed_when: desktop_has_nvidia_settings.packages | length > 0
 - name: Install graphic card manager
   kewlfft.aur.aur:
     name: optimus-manager-qt
@@ -52,7 +52,7 @@
   environment: "{{ proxy_env }}"
   become: true
   become_user: aur_builder
-  when: not has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
+  when: not desktop_has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Optimus manager config  # see: https://github.com/Askannz/optimus-manager#important--manjaro-kde-users
   ansible.builtin.replace:
     path: /etc/sddm.conf
@@ -62,7 +62,7 @@
     - DisplayCommand
     - DisplayStopCommand
   become: true
-  when: not has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
+  when: not desktop_has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Set graphic environment vars
   ansible.builtin.blockinfile:
     path: ~/.xprofile
@@ -105,7 +105,6 @@
       - wine
       - winetricks
       # record/show
-      - flameshot
       - peek
       - screenkey
       # graphics
@@ -137,8 +136,7 @@
   become: true
   become_user: aur_builder
   environment: "{{ proxy_env }}"
-  ignore_errors: true
-  register: install_result1
+  failed_when: false
   kewlfft.aur.aur:
     state: present
     name:
@@ -146,6 +144,7 @@
       - rar
       - ccze
       # record/show
+      - snipaste
       - simplescreenrecorder
       # video
       - davinci-resolve # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
@@ -186,8 +185,7 @@
   become: true
   become_user: aur_builder
   environment: "{{ proxy_env }}"
-  ignore_errors: true
-  register: install_result2
+  failed_when: false
   loop:
     - linuxqq
     - wechat-bin
@@ -227,8 +225,8 @@
     dest: ~/.config/autostart/
     mode: u=rw,g=r,o=r
   loop:
-    - /usr/share/applications/org.flameshot.Flameshot.desktop
     - /usr/share/applications/OneDriveGUI.desktop
+    - /usr/share/applications/Snipaste.desktop
 - name: Set autostart scripts
   ansible.builtin.copy:
     content: "{{ item.content }}"
