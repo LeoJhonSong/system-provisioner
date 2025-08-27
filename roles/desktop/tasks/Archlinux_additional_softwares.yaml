@@ -132,6 +132,7 @@
       - npm
       - jdk-openjdk
       - gparted
+      - wqy-microhei
 - name: Install extra desktop softwares from AUR
   become: true
   become_user: aur_builder
@@ -147,7 +148,7 @@
       - snipaste
       - simplescreenrecorder
       # video
-      - davinci-resolve # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
+      - davinci-resolve-studio # extra installation files needed. see: https://aur.archlinux.org/packages/davinci-resolve
       # audio
       - audiorelay
       - deadbeef
@@ -194,6 +195,7 @@
     - onedrivegui-git
     - zotero-beta-bin
     - wemeet-bin
+    # - wemeet-wayland-screenshare-git # wayland下屏幕共享补丁
     - zoom
     - wps-office-cn  # wps套件国内版
     - wps-office-mui-zh-cn  # wps中文语言包

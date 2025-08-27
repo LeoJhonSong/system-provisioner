@@ -42,6 +42,7 @@ alias lt='ls --tree'
 alias l='ls -a'
 alias ll='ls -al'
 alias ccze='ccze -A'
+alias ys='yay -S'
 command -v bat &> /dev/null && alias cat='bat'  # if bat exist, set as cat's alias
 command -v lsd &> /dev/null && alias ls='lsd'
 alias p='python'
@@ -79,6 +80,16 @@ if command -v fzf &> /dev/null; then
     }
     [[ $- == *i* ]] && source /usr/share/fzf/completion.zsh 2> /dev/null # load auto-completion
     source /usr/share/fzf/key-bindings.zsh # load keybindings
+fi
+
+if command -v yazi &> /dev/null; then
+    function y() {
+        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+        yazi "$@" --cwd-file="$tmp"
+        IFS= read -r -d '' cwd < "$tmp"
+        [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+        rm -f -- "$tmp"
+    }
 fi
 
 # navi widget install (keybinding: Ctrl-G)
