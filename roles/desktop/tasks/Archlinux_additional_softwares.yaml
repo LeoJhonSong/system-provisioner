@@ -20,7 +20,9 @@
 # Install docker and start service
 - name: Install docker
   community.general.pacman:
-    name: docker
+    name:
+      - docker
+      - docker-compose
     state: present
   become: true
 
@@ -105,15 +107,15 @@
       - wine
       - winetricks
       # record/show
-      - peek
+      - kooha
       - screenkey
       # graphics
       - drawio-desktop
       - gimp
       - inkscape
       - blender
-      - jpegoptim
-      - optipng
+      - libjxl  # provides cjpegli
+      - oxipng
       - ghostscript
       # video
       - vlc
@@ -124,8 +126,8 @@
       - filezilla
       - sshfs
       # - frpc/frps
-      - remmina
-      - freerdp
+      # - remmina
+      # - freerdp
       # other
       - aria2
       - nodejs
@@ -168,7 +170,7 @@
       - python-comtool # Serial/Network Debugging Tool
 - name: Change mirror source of npm
   ansible.builtin.command:
-    cmd: npm config set registry https://registry.npm.taobao.org
+    cmd: npm config set registry https://registry.npmmirror.com
   changed_when: true
 - name: Install yarn
   community.general.npm:
@@ -177,7 +179,7 @@
   become: true
 - name: Change mirror source of yarn
   ansible.builtin.command:
-    cmd: yarn config set registry https://registry.npm.taobao.org
+    cmd: yarn config set registry https://registry.npmmirror.com
   changed_when: true
 - name: Install office softwares from AUR
   kewlfft.aur.aur:
@@ -195,7 +197,6 @@
     - onedrivegui-git
     - zotero-beta-bin
     - wemeet-bin
-    # - wemeet-wayland-screenshare-git # wayland下屏幕共享补丁
     - zoom
     - wps-office-cn  # wps套件国内版
     - wps-office-mui-zh-cn  # wps中文语言包
@@ -244,23 +245,3 @@
         Path=
         Type=Application
         X-KDE-AutostartScript=true
-    - filename: clash-dashboard.desktop
-      content: |
-        [Desktop Entry]
-        Exec=/home/{{ ansible_user_id }}/projects/Shell-Scripts/clash-dashboard
-        Icon=dialog-scripts
-        Name=clash-dashboard
-        Path=
-        Type=Application
-        X-KDE-AutostartScript=true
-    - filename: remmina-applet.desktop
-      content: |
-        [Desktop Entry]
-        Version=1.0
-        Name=Remmina Applet
-        Comment=Connect to remote desktops through the applet menu
-        Icon=org.remmina.Remmina
-        Exec=remmina -i
-        Terminal=false
-        Type=Application
-        Hidden=false

@@ -17,10 +17,12 @@
       - cmake
       - clang
       - bear # generate compile_commands.json for make projects
+      # - uv
       # network
       - nmap
       - curl
       - wget
+      - git-lfs
 - name: Make sure fd directory exist
   ansible.builtin.file:
     path: "~/.config/fd"

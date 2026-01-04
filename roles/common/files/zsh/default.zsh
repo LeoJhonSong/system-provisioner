@@ -1,6 +1,7 @@
 # force UTF-8 encoding
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
+
 # Path to your oh-my-zsh installation.
 if [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]]; then
     export ZSH=~/.oh-my-zsh
@@ -12,6 +13,10 @@ if [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]]; then
     antigen bundle command-not-found
     antigen bundle colored-man-pages
     antigen bundle sudo
+    antigen bundle docker
+    antigen bundle git
+    antigen bundle python
+    antigen bundle pip
     # custom plugins
     antigen bundle zsh-users/zsh-syntax-highlighting
     antigen bundle zsh-users/zsh-autosuggestions
@@ -43,7 +48,7 @@ alias l='ls -a'
 alias ll='ls -al'
 alias ccze='ccze -A'
 alias ys='yay -S'
-command -v bat &> /dev/null && alias cat='bat'  # if bat exist, set as cat's alias
+command -v bat &> /dev/null && alias cat='bat --style grid '  # if bat exist, set as cat's alias
 command -v lsd &> /dev/null && alias ls='lsd'
 alias p='python'
 

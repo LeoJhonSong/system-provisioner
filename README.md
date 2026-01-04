@@ -65,6 +65,7 @@ ansible-playbook site.yaml -l localhost --tags disk --connection=local
   Environment="HTTP_PROXY=http://127.0.0.1:7890"
   Environment="HTTPS_PROXY=http://127.0.0.1:7890"
   ```
+- enable shell integration for zsh: add `typeset -g POWERLEVEL9K_TERM_SHELL_INTEGRATION=true` to `.p10k.zsh`, it only works there since `.p10k.zsh` clears all POWERLEVEL9K variables
 
 ## Tips
 

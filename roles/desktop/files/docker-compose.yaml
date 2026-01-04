@@ -1,0 +1,22 @@
+# Usage:
+# - To build: HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build
+# - To run: docker compose up -d
+services:
+  matlab:
+    build:
+      context: .
+      dockerfile: Dockerfile.matlab
+      args:
+        ADDITIONAL_PRODUCTS: Computer_Vision_Toolbox Control_System_Toolbox Curve_Fitting_Toolbox Deep_Learning_Toolbox Image_Processing_Toolbox Robotics_System_Toolbox Signal_Processing_Toolbox Simscape Simscape_Battery Simscape_Electrical Simulink Statistics_and_Machine_Learning_Toolbox
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
+    image: matlab_with_toolboxes:r2025b
+    container_name: matlab_r2025b
+    volumes:
+      - ~/Documents/MATLAB:/home/matlab/Documents/MATLAB:rw
+    tty: true
+    stdin_open: true
+    ports:
+      - "8888:8888"
+    shm_size: "512M"
+    command: "-browser"

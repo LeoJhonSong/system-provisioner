@@ -10,4 +10,6 @@
         "pythonrc"
     ],
     "ansible.python.interpreterPath": "/usr/bin/python",
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
 }
