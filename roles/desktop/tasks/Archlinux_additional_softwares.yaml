@@ -40,31 +40,6 @@
     append: true
   become: true
 
-- name: Check if has nvidia-settings
-  community.general.pacman:
-    name: nvidia-settings
-    state: present
-  check_mode: true
-  register: desktop_has_nvidia_settings
-  changed_when: desktop_has_nvidia_settings.packages | length > 0
-- name: Install graphic card manager
-  kewlfft.aur.aur:
-    name: optimus-manager-qt
-    state: present
-  environment: "{{ proxy_env }}"
-  become: true
-  become_user: aur_builder
-  when: not desktop_has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
-- name: Optimus manager config  # see: https://github.com/Askannz/optimus-manager#important--manjaro-kde-users
-  ansible.builtin.replace:
-    path: /etc/sddm.conf
-    regexp: '^(# )?{{ item }}'
-    replace: '# {{ item }}'
-  loop:
-    - DisplayCommand
-    - DisplayStopCommand
-  become: true
-  when: not desktop_has_nvidia_settings.changed # noqa: no-handler # see: https://ansible-lint.readthedocs.io/rules/no-handler/
 - name: Set graphic environment vars
   ansible.builtin.blockinfile:
     path: ~/.xprofile

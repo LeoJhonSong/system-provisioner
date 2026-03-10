@@ -48,7 +48,7 @@ alias l='ls -a'
 alias ll='ls -al'
 alias ccze='ccze -A'
 alias ys='yay -S'
-command -v bat &> /dev/null && alias cat='bat --style grid '  # if bat exist, set as cat's alias
+command -v bat &> /dev/null && alias cat='bat --style grid'  # if bat exist, set as cat's alias
 command -v lsd &> /dev/null && alias ls='lsd'
 alias p='python'
 
