@@ -1,98 +1,77 @@
-# README
+# system-provisioner
 
-A playbook to set up my PC/board/server of different Linux distributions (mainly Manjaro and Debian-based), ready for work in one click 🍻
+个人机与公司机的系统配置, pyinfra 实现.
 
+## 架构
 
-## Precondition
+- **三层**: `common` (两台都要) / `personal` (仅个人机) / `company` (仅公司机)
+- **profile 区分**: 个人机 `@local` 跑 common+personal, 公司机 SSH 跑 common+company
+- **分组执行**: 每层内任务切成命名组 (如 `zsh` `docker` `latex`), 可用 `only=` / `skip=` 选择性执行
 
-### Install dependencies
+## 前置条件
 
-```shell
-# select China mirrors
-sudo pacman-mirrors -i -c China -m rank
-# update mirrors
-sudo pacman -Syy
-sudo pacman -S ansible
-```
+- 控制端 (跑 pyinfra 的机器): 已装 `pyinfra` `just`
+- 目标机: Manjaro, SSH 可达 (公司机), 或就是控制端自己 (个人机)
 
-### Install required modules
-
-- [community.general collection](https://galaxy.ansible.com/community/general) needed for git_config, pacman and npm modules **in the desktop role**. It is very likely that you already have this collection installed if ansible is installed.
-- [kewlfft.aur](https://github.com/kewlfft/ansible-aur) needed to manage packages from AUR, **in the desktop role**.
-
-To install them from Ansible Galaxy, run `ansible-galaxy collection install -r ./requirements.yaml`, or `ansible-galaxy collection install kewlfft.aur` to just install kewlfft.aur.
-
-### turn off password timeout
-
-add line `Defaults passwd_timeout=0` to end of `/etc/sudoers` with `sudo visudo /etc/sudoers`
-
-### enable avahi and sshd if remote access with ssh
+## 用法
 
 ```sh
-sudo systemctl enable --now avahi-daemon sshd
+# 个人机全量
+just personal
+
+# 个人机只跑 zsh 和 cli 组
+just personal only=zsh,cli
+
+# 个人机跳过 latex 和 media 组
+just personal skip=latex,media
+
+# 公司机 (传 IP 或 hostname, 会提示输 SSH 密码和 sudo 密码)
+just company 192.168.2.99
+
+# 语法检查 (对 Docker 容器跑 --dry, 不真执行)
+just check
+
+# 列出所有组
+just groups
 ```
 
-### proxy
+## 组名清单
 
-To run from localhost in China, install [ShellCrash](https://github.com/juewuy/ShellCrash) or other proxy client and start it.
+### common 层
+- `pacman`: yay 与免密 sudoers
+- `cli`: tmux, bat, lsd, yazi, fd, fzf, nmap, curl, wget, git-lfs
+- `dev`: base-devel, gdb, cmake, nodejs/npm/yarn, jdk, pip/npm/yarn 镜像
+- `input`: fcitx5 全套, kvantum, `.xprofile`
+- `docker`: docker + compose, 服务自启, 用户入组
+- `apps`: VSCode, Typora, Edge, Snipaste, WPS, 微信/飞书/腾讯会议
 
-```sh
-sudo -i # switch to root user
-export url='https://fastly.jsdelivr.net/gh/juewuy/ShellCrash@master' && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh  && bash /tmp/install.sh && source /etc/profile &> /dev/null
-```
+### personal 层
+- `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, `~/.config/zsh` 软链
+- `git`: user.name (hostname), user.email, credential.helper
+- `python`: pyenv, `.pythonrc.py`
+- `wakatime`: wakatime-cli, `.wakatime.cfg`
+- `clang`: clang, bear, `.clang-format`
+- `aria2`: 配置软链
+- `graphics`: drawio, gimp, inkscape, blender
+- `media`: vlc, handbrake, kdenlive, wine, davinci-resolve, deadbeef
+- `latex`: texlive 全套
+- `office`: zotero, onedrive, linuxqq, zoom
+- `extras`: github-desktop, 录屏工具, 串口工具, samba, filezilla
+- `disk`: Windows 卷挂载
 
-## Usage
+### company 层
+- `placeholder`: 占位 (空)
 
-```sh
-# deploy all tasks to all hosts in hosts
-ansible-playbook site.yaml
-# apply everything but disk mounting and general softwares installing tasks
-ansible-playbook --skip-tags disk,softwares
-# only apply to board group in hosts
-ansible-playbook site.yaml --limit=board
-# list matching hosts under current limits and do nothing else
-ansible-playbook site.yaml --limit=board --list-hosts
-# only apply disk mounting tasks to localhost via local connection (not ssh connection)
-ansible-playbook site.yaml -l localhost --tags disk --connection=local
-```
+## 后置条件
 
-## Postcondition
+- zsh 作为默认 shell (需手动 `chsh -s /bin/zsh`)
+- `~/.zshrc` 为本机私有配置, 仓库不跟踪; `~/.config/zsh/default.zsh` 为同步配置
+- AUR 包构建失败不中断部署, 仅记 warning
+- yay `config.json` 只改 `removemake` 和 `provides` 两键, 其余保持 yay 自己写的值
 
-- `yay --answerclean None --answerdiff None --answeredit None --save` to set default answers for yay
-- [set proxy for onedrive](https://github.com/abraunegg/onedrive/blob/master/docs/USAGE.md#access-onedrive-service-through-a-proxy). Edit systemd service of onedrive with `sudo -e /usr/lib/systemd/user/onedrive.service` and add following two lines under **[Service]** section:
+## 注意事项
 
-  ```sh
-  Environment="HTTP_PROXY=http://127.0.0.1:7890"
-  Environment="HTTPS_PROXY=http://127.0.0.1:7890"
-  ```
-- enable shell integration for zsh: add `typeset -g POWERLEVEL9K_TERM_SHELL_INTEGRATION=true` to `.p10k.zsh`, it only works there since `.p10k.zsh` clears all POWERLEVEL9K variables
+- `.wakatime.cfg` 里 `api_key` 是真实值且仓库 PUBLIC, 等同已泄露. 用户确认接受
+- 免密 sudoers 规则限定 `/usr/bin/pacman`, 但 pacman 能执行安装脚本和装本地包, 等同无密码 root. 这是 yay 无人值守的代价
+- `buildDir` 在用户 `~/.cache/yay`, 不同用户名机器间不共享缓存
 
-## Tips
-
-To run a single task on managed nodes as check mode to try out what exactly will happen, use this:
-
-```sh
-ansible <nodes> -m <module> -a '{"opt1": "val1", "opt2": "val2"}' -C
-```
-
-Here is an example and its output:
-
-```sh
-# install nvidia-settings using module community.general.pacman under check mode
-ansible localhost -m community.general.pacman -a '{"pkg":"nvidia-settings", "state":"present"}' -C
-```
-
-```sh
-[WARNING]: No inventory was parsed, only implicit localhost is available
-localhost | CHANGED => {
-    "changed": true,
-    "msg": "Would have installed 5 packages",
-    "packages": [
-        "egl-wayland",
-        "eglexternalplatform",
-        "libxnvctrl",
-        "nvidia-settings",
-        "nvidia-utils"
-    ]
-}
-```

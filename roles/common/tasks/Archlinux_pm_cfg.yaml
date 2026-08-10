@@ -1,8 +1,0 @@
----
-# install yay
-- name: Install yay
-  become: true
-  community.general.pacman:
-    name:
-      - yay
-    state: present

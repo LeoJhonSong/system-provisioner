@@ -1,9 +1,0 @@
----
-- name: Install nvim dependencies
-  become: true
-  community.general.pacman:
-    state: present
-    name:
-      - neovim
-      - python-pynvim
-      - xclip
