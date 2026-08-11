@@ -166,24 +166,6 @@ def zsh_setup():
         )
 
 
-@deploy("fcitx5 配置")
-def fcitx5_config():
-    """fcitx5 用户配置: 拼音输入法 + 左 Shift 切换.
-
-    profile: 输入法列表 (keyboard-us, pinyin)
-    config: 快捷键 (左 Shift 激活/切换)
-    """
-    files.directory(name="建 fcitx5 配置目录", path="~/.config/fcitx5", mode="700")
-
-    for filename in ("profile", "config"):
-        files.put(
-            name=f"放 fcitx5/{filename}",
-            src=f"files/personal/fcitx5/{filename}",
-            dest=f"~/.config/fcitx5/{filename}",
-            mode="600",
-        )
-
-
 @deploy("git")
 def git_setup():
     """git 配置: user.name 用 hostname, email 与 credential.helper."""
@@ -310,7 +292,6 @@ def disk_mount():
 # 组名注册
 GROUPS = {
     "zsh": zsh_setup,
-    "fcitx5": fcitx5_config,
     "git": git_setup,
     "python": python_setup,
     "wakatime": wakatime_setup,

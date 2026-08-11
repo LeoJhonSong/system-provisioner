@@ -179,7 +179,7 @@ def dev():
 
 @deploy("输入法")
 def input_method():
-    """fcitx5 全套与图形环境变量."""
+    """fcitx5 全套与图形环境变量, 拼音输入法 + 左 Shift 切换."""
     pacman.packages(name="装输入法", packages=INPUT_PACKAGES, _sudo=True)
 
     files.block(
@@ -188,6 +188,17 @@ def input_method():
         content=XPROFILE_BLOCK,
         marker="# {mark} MANAGED BLOCK fcitx",
     )
+
+    # fcitx5 用户配置: profile (输入法列表) + config (快捷键)
+    files.directory(name="建 fcitx5 配置目录", path="~/.config/fcitx5", mode="700")
+
+    for filename in ("profile", "config"):
+        files.put(
+            name=f"放 fcitx5/{filename}",
+            src=f"files/common/fcitx5/{filename}",
+            dest=f"~/.config/fcitx5/{filename}",
+            mode="600",
+        )
 
 
 @deploy("Docker")
