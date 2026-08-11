@@ -18,9 +18,8 @@ from pyinfra import host
 from pyinfra.api import OperationError
 from pyinfra.api import operation
 from pyinfra.facts.files import FileContents
+from pyinfra.facts.server import Home
 from pyinfra.operations import files
-
-CONFIG_PATH = "~/.config/yay/config.json"
 
 # 无人值守必须定死的键
 REQUIRED = {
@@ -32,7 +31,10 @@ REQUIRED = {
 @operation()
 def config():
     """把 yay 配置里几个会弹菜单的键改成无人值守可用的值."""
-    lines = host.get_fact(FileContents, path=CONFIG_PATH)
+    home = host.get_fact(Home)
+    config_path = f"{home}/.config/yay/config.json"
+
+    lines = host.get_fact(FileContents, path=config_path)
 
     # 文件不存在: yay 还没跑过. 写一份只含必需键的配置, yay 首次运行时会
     # 自己补齐其余默认值
@@ -42,7 +44,7 @@ def config():
         try:
             current = json.loads("\n".join(lines))
         except json.JSONDecodeError as error:
-            raise OperationError(f"{CONFIG_PATH} 不是合法 JSON, 先手动修好再跑") from error
+            raise OperationError(f"{config_path} 不是合法 JSON, 先手动修好再跑") from error
 
     if all(current.get(key) == value for key, value in REQUIRED.items()):
         host.noop("yay 配置已是无人值守可用的值")
@@ -53,7 +55,7 @@ def config():
 
     yield from files.put._inner(
         src=StringIO(content),
-        dest=CONFIG_PATH,
+        dest=config_path,
         add_deploy_dir=False,
         mode="600",
     )

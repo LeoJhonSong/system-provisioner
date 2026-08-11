@@ -134,20 +134,22 @@ def cli():
     """命令行工具与 tmux 配置."""
     pacman.packages(name="装命令行工具", packages=CLI_PACKAGES, _sudo=True)
 
+    home = host.get_fact(Home)
+
     # oh-my-tmux 全网无包, 两件套 vendored 在仓库里
     for filename in (".tmux.conf", ".tmux.conf.local"):
         files.put(
             name=f"放 {filename}",
             src=f"files/common/tmux/{filename}",
-            dest=f"~/{filename}",
+            dest=f"{home}/{filename}",
             mode="644",
         )
 
-    files.directory(name="建 fd 配置目录", path="~/.config/fd", mode="755")
+    files.directory(name="建 fd 配置目录", path=f"{home}/.config/fd", mode="755")
     files.put(
         name="放 fd ignore",
         src="files/common/fd/ignore",
-        dest="~/.config/fd/ignore",
+        dest=f"{home}/.config/fd/ignore",
         mode="644",
     )
 
@@ -157,19 +159,21 @@ def dev():
     """编译工具链, node 与 java, 以及 pip/npm/yarn 的国内镜像."""
     pacman.packages(name="装开发工具链", packages=DEV_PACKAGES, _sudo=True)
 
+    home = host.get_fact(Home)
+
     files.put(
         name="配置 pip 镜像",
         src=StringIO("[global]\nindex-url = https://mirrors.aliyun.com/pypi/simple/\n"),
-        dest="~/.config/pip/pip.conf",
+        dest=f"{home}/.config/pip/pip.conf",
         mode="644",
         add_deploy_dir=False,
     )
 
     # 直接写配置文件而非 `npm config set`: 后者每次都报 changed
-    files.file(name="touch ~/.npmrc", path="~/.npmrc", mode="644", touch=True)
+    files.file(name="touch .npmrc", path=f"{home}/.npmrc", mode="644", touch=True)
     files.line(
         name="配置 npm 镜像",
-        path="~/.npmrc",
+        path=f"{home}/.npmrc",
         line="^registry=",
         replace="registry=https://registry.npmmirror.com",
     )
@@ -181,10 +185,10 @@ def dev():
         _sudo=True,
     )
 
-    files.file(name="touch ~/.yarnrc", path="~/.yarnrc", mode="644", touch=True)
+    files.file(name="touch .yarnrc", path=f"{home}/.yarnrc", mode="644", touch=True)
     files.line(
         name="配置 yarn 镜像",
-        path="~/.yarnrc",
+        path=f"{home}/.yarnrc",
         line='^registry "',
         replace='registry "https://registry.npmmirror.com"',
     )
@@ -195,21 +199,23 @@ def input_method():
     """fcitx5 全套与图形环境变量, 拼音输入法 + 左 Shift 切换."""
     pacman.packages(name="装输入法", packages=INPUT_PACKAGES, _sudo=True)
 
+    home = host.get_fact(Home)
+
     files.block(
         name="配置图形环境变量",
-        path="~/.xprofile",
+        path=f"{home}/.xprofile",
         content=XPROFILE_BLOCK,
         marker="# {mark} MANAGED BLOCK fcitx",
     )
 
     # fcitx5 用户配置: profile (输入法列表) + config (快捷键)
-    files.directory(name="建 fcitx5 配置目录", path="~/.config/fcitx5", mode="700")
+    files.directory(name="建 fcitx5 配置目录", path=f"{home}/.config/fcitx5", mode="700")
 
     for filename in ("profile", "config"):
         files.put(
             name=f"放 fcitx5/{filename}",
             src=f"files/common/fcitx5/{filename}",
-            dest=f"~/.config/fcitx5/{filename}",
+            dest=f"{home}/.config/fcitx5/{filename}",
             mode="600",
         )
 

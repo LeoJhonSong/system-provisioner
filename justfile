@@ -6,7 +6,7 @@ personal *args:
 
 # 公司机 (SSH, 需传 IP 或 hostname)
 company host *args:
-    pyinfra {{host}} deploy.py --data profile=company --user naviai --ssh-password-prompt --sudo --use-sudo-password --same-sudo-password {{args}}
+    pyinfra {{host}} deploy.py --data profile=company --user naviai --ssh-password-prompt --use-sudo-password {{args}}
 
 # 语法检查 (对 manjarolinux/base 容器跑 --dry)
 check:

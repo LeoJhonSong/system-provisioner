@@ -119,6 +119,8 @@ def _zshrc_skeleton_template(home: str, proxy: str) -> str:
 @deploy("zsh")
 def zsh_setup():
     """zsh 配置: omz + 插件 + 自定义配置."""
+    home = host.get_fact(Home)
+
     # pkgfile 替代 antigen 的 command-not-found bundle
     pacman.packages(name="装 pkgfile", packages=["pkgfile"], _sudo=True)
     server.shell(
@@ -136,32 +138,31 @@ def zsh_setup():
     git.repo(
         name="clone oh-my-zsh",
         src="https://github.com/ohmyzsh/ohmyzsh",
-        dest="~/.oh-my-zsh",
+        dest=f"{home}/.oh-my-zsh",
         pull=False,
     )
 
     git.repo(
         name="clone Shell-Scripts",
         src="https://github.com/LeoJhonSong/Shell-Scripts",
-        dest="~/projects/Shell-Scripts",
+        dest=f"{home}/projects/Shell-Scripts",
         pull=False,
     )
 
     # ~/.config/zsh 软链到仓库内 files/personal/zsh, 编辑即生效且改动回流
     files.link(
         name="软链 ~/.config/zsh",
-        path="~/.config/zsh",
+        path=f"{home}/.config/zsh",
         target=str(REPO_ROOT / "files/personal/zsh"),
     )
 
     # .zshrc 骨架: 判存, 不存在才 put, 已存在完全不动 (本机私有改动)
-    if not host.get_fact(File, path="~/.zshrc"):
-        home = host.get_fact(Home)
+    if not host.get_fact(File, path=f"{home}/.zshrc"):
         proxy = host.data.get("proxy", "")
         files.template(
             name="写 .zshrc 骨架",
             src=StringIO(_zshrc_skeleton_template(home, proxy)),
-            dest="~/.zshrc",
+            dest=f"{home}/.zshrc",
             mode="644",
         )
 
@@ -178,11 +179,13 @@ def git_setup():
 @deploy("python")
 def python_setup():
     """pyenv 与 .pythonrc.py."""
+    home = host.get_fact(Home)
+
     pacman.packages(name="装 pyenv", packages=["pyenv"], _sudo=True)
     files.put(
         name="放 .pythonrc.py",
         src="files/personal/.pythonrc.py",
-        dest="~/.pythonrc.py",
+        dest=f"{home}/.pythonrc.py",
         mode="644",
     )
 
@@ -190,6 +193,8 @@ def python_setup():
 @deploy("wakatime")
 def wakatime_setup():
     """wakatime-cli 与 .wakatime.cfg."""
+    home = host.get_fact(Home)
+
     server.shell(
         name="装 wakatime-cli",
         commands=[
@@ -199,7 +204,7 @@ def wakatime_setup():
     files.put(
         name="放 .wakatime.cfg",
         src="files/personal/.wakatime.cfg",
-        dest="~/.wakatime.cfg",
+        dest=f"{home}/.wakatime.cfg",
         mode="600",
     )
 
@@ -207,11 +212,13 @@ def wakatime_setup():
 @deploy("clang")
 def clang_setup():
     """clang 工具链与 .clang-format."""
+    home = host.get_fact(Home)
+
     pacman.packages(name="装 clang/bear", packages=["clang", "bear"], _sudo=True)
     files.put(
         name="放 .clang-format",
         src="files/personal/.clang-format",
-        dest="~/.clang-format",
+        dest=f"{home}/.clang-format",
         mode="644",
     )
 
@@ -219,9 +226,11 @@ def clang_setup():
 @deploy("aria2")
 def aria2_setup():
     """aria2 配置与自启."""
+    home = host.get_fact(Home)
+
     files.link(
         name="软链 aria2.conf",
-        path="~/.config/aria2/aria2.conf",
+        path=f"{home}/.config/aria2/aria2.conf",
         target=str(REPO_ROOT / "files/personal/aria2.conf"),
     )
 
@@ -248,15 +257,17 @@ def latex_setup():
 @deploy("办公软件")
 def office():
     """zotero, onedrive, linuxqq, zoom."""
+    home = host.get_fact(Home)
+
     aur.packages(OFFICE_AUR_PACKAGES)
 
     # OneDriveGUI 自启
     files.put(
         name="OneDriveGUI 自启",
         src="/usr/share/applications/OneDriveGUI.desktop",
-        dest="~/.config/autostart/OneDriveGUI.desktop",
+        dest=f"{home}/.config/autostart/OneDriveGUI.desktop",
         mode="644",
-        _sudo_user=host.get_fact(Home).split("/")[-1],
+        _sudo_user=home.split("/")[-1],
     )
 
 
