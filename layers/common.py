@@ -94,12 +94,12 @@ export QT_STYLE_OVERRIDE=kvantum
 
 @deploy("包管理器")
 def pacman_setup():
-    """配置镜像源, 更新系统, 装 yay, 配置 yay, 给用户开 pacman 免密.
+    """配置镜像源, 更新系统, 装 yay, 配置 yay.
 
-    安全代价: NOPASSWD 限定 `/usr/bin/pacman` 不构成有效隔离. pacman 能执行包
-    自带的安装脚本, `-U` 能装任意本地构建的包, 因此这条规则等同于给该用户无密码
-    root. 采用它是因为 yay 拒绝以 root 运行且内部自己调 sudo, 无人值守时没有更
-    好的选择 (paru 同样如此). 已知并接受.
+    不给用户加 NOPASSWD sudoers 规则: Manjaro 默认用户在 wheel 组已有
+    `(ALL) ALL`, 配合部署时传入的 sudo 密码, yay 本就能跑. 而 sudoers.d 里
+    只授权单条命令的规则, 因对同一用户以最后匹配为准, 有覆盖 wheel 那条
+    `ALL` 的风险, 反而降权.
     """
     # 配置 Manjaro 中国镜像源 (按速度排序, 非交互式)
     server.shell(
@@ -115,16 +115,6 @@ def pacman_setup():
     pacman.upgrade(name="升级所有包", _sudo=True)
 
     pacman.packages(name="装 yay", packages=["yay"], _sudo=True)
-
-    user = host.get_fact(User)
-    files.put(
-        name="给用户开 pacman 免密",
-        src=StringIO(f"{user} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"),
-        dest=f"/etc/sudoers.d/10-{user}-pacman",
-        mode="440",
-        add_deploy_dir=False,
-        _sudo=True,
-    )
 
     yay.config(name="配置 yay")
 
