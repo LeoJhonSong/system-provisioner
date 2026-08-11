@@ -55,6 +55,7 @@ INPUT_PACKAGES = [
 
 # 桌面应用, 官方源部分
 APP_PACKAGES = [
+    "plasma-x11-session",  # KDE X11 session, 很多软件需要 X11
     "gparted",
     "7zip",
 ]
@@ -207,6 +208,22 @@ def apps():
     aur.packages(APP_AUR_PACKAGES)
 
 
+@deploy("SDDM X11")
+def sddm_x11():
+    """配置 SDDM 默认用 X11 session (plasmax11).
+
+    Manjaro KDE 默认 Wayland, 但很多软件需要 X11. 这里改
+    `/etc/sddm.conf.d/kde_settings.conf` 的 `[Autologin] Session=`.
+    """
+    files.line(
+        name="SDDM 默认 X11 session",
+        path="/etc/sddm.conf.d/kde_settings.conf",
+        line="^Session=",
+        replace="Session=plasmax11",
+        _sudo=True,
+    )
+
+
 # 组名注册. deploy.py 按 only/skip 过滤
 GROUPS = {
     "pacman": pacman_setup,
@@ -215,4 +232,5 @@ GROUPS = {
     "input": input_method,
     "docker": docker_setup,
     "apps": apps,
+    "sddm": sddm_x11,
 }

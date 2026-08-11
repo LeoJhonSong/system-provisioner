@@ -43,7 +43,8 @@ just groups
 - `dev`: base-devel, gdb, cmake, nodejs/npm/yarn, jdk, pip/npm/yarn 镜像
 - `input`: fcitx5 全套, kvantum, `.xprofile`
 - `docker`: docker + compose, 服务自启, 用户入组
-- `apps`: VSCode, Typora, Edge, Snipaste, WPS, 微信/飞书/腾讯会议
+- `apps`: VSCode, Typora, Edge, Snipaste, WPS, 微信/飞书/腾讯会议, plasma-x11-session
+- `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
 
 ### personal 层
 - `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, `~/.config/zsh` 软链
