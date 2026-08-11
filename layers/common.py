@@ -94,7 +94,7 @@ export QT_STYLE_OVERRIDE=kvantum
 
 @deploy("包管理器")
 def pacman_setup():
-    """配置镜像源, 装 yay, 配置 yay, 给用户开 pacman 免密.
+    """配置镜像源, 更新系统, 装 yay, 配置 yay, 给用户开 pacman 免密.
 
     安全代价: NOPASSWD 限定 `/usr/bin/pacman` 不构成有效隔离. pacman 能执行包
     自带的安装脚本, `-U` 能装任意本地构建的包, 因此这条规则等同于给该用户无密码
@@ -107,6 +107,12 @@ def pacman_setup():
         commands=["pacman-mirrors -c China -m rank"],
         _sudo=True,
     )
+
+    # 更新软件包数据库
+    pacman.update(name="更新软件包数据库", _sudo=True)
+
+    # 升级所有已安装的包 (pacman -Su)
+    pacman.upgrade(name="升级所有包", _sudo=True)
 
     pacman.packages(name="装 yay", packages=["yay"], _sudo=True)
 
