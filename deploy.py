@@ -77,8 +77,15 @@ def main():
         logger.info(f"代理: {proxy}")
 
     # 依次执行选中的组
+    #
+    # _sudo=False 是这里的默认值, 不是命令行的 --sudo. 提权范围由代码掌控:
+    # 层里标了 _sudo=True 的算子 (装包, 改 /etc) 会覆盖这个默认值, 因为全局
+    # 参数优先级是 直接调用 > deploy kwargs > host data > config.
+    #
+    # 反过来 (命令行给 --sudo, 代码里逐个标 _sudo=False) 需要在 23 处用户级
+    # 操作上标注, 漏一处就把用户配置文件写成 root 所有.
     for group_name, group_func in selected.items():
-        group_func(_env=proxy_env)
+        group_func(_env=proxy_env, _sudo=False)
 
 
 # 直接调用, pyinfra 通过 import 加载 deploy 文件
