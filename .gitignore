@@ -1,3 +1,4 @@
 *.zwc
 *.swp
-/.ansible/pyinfra-debug.log
+/.ansible/
+pyinfra-debug.log
