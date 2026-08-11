@@ -235,6 +235,19 @@ def sddm_x11():
     )
 
 
+@deploy("Claude 工具")
+def claude_tools():
+    """claude-code, cc-switch-cli, claude-history."""
+    # claude-code AUR 无官方包, 用官方脚本
+    server.shell(
+        name="装 claude-code",
+        commands=["command -v claude || curl -fsSL https://claude.ai/install.sh | bash"],
+    )
+
+    # cc-switch-cli 与 claude-history 从 AUR 装
+    aur.packages(["cc-switch-cli-git", "claude-history"])
+
+
 # 组名注册. deploy.py 按 only/skip 过滤
 GROUPS = {
     "pacman": pacman_setup,
@@ -244,4 +257,5 @@ GROUPS = {
     "docker": docker_setup,
     "apps": apps,
     "sddm": sddm_x11,
+    "claude": claude_tools,
 }
