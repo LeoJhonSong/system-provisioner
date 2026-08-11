@@ -84,6 +84,8 @@ EXTRAS_AUR_PACKAGES = [
     "simplescreenrecorder",
     "python-comtool",
     "ccze",
+    "cc-switch-cli-git",
+    "claude-history",
 ]
 
 
@@ -265,6 +267,12 @@ def extras():
     """录屏, 串口, samba, filezilla, github-desktop 等."""
     pacman.packages(name="装杂项工具 (官方源)", packages=EXTRAS_PACKAGES, _sudo=True)
     aur.packages(EXTRAS_AUR_PACKAGES)
+
+    # claude-code AUR 无官方包, 用官方脚本
+    server.shell(
+        name="装 claude-code",
+        commands=["command -v claude || curl -fsSL https://claude.ai/install.sh | bash"],
+    )
 
 
 @deploy("Windows 卷挂载")
