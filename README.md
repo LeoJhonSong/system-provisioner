@@ -38,7 +38,7 @@ just groups
 ## 组名清单
 
 ### common 层
-- `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置
+- `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置, pacman 免密 sudoers
 - `cli`: tmux, bat, lsd, yazi, fd, fzf, nmap, curl, wget, git-lfs
 - `dev`: base-devel, gdb, cmake, nodejs/npm/yarn, jdk, pip/npm/yarn 镜像
 - `input`: fcitx5 全套, kvantum, `.xprofile`, 拼音输入法 + 左 Shift 切换
@@ -74,6 +74,7 @@ just groups
 ## 注意事项
 
 - `.wakatime.cfg` 里 `api_key` 是真实值且仓库 PUBLIC, 等同已泄露. 用户确认接受
-- 部署账号需在 wheel 组 (Manjaro 默认如此), sudo 密码由命令行传入。仓库不写 sudoers 规则: 只授权单条命令的规则以最后匹配为准, 有覆盖 wheel 那条 `ALL` 的风险
+- 部署账号需在 wheel 组 (Manjaro 默认如此), sudo 密码由命令行传入
+- 免密 sudoers 规则限定 `/usr/bin/pacman`, 但 pacman 能执行安装脚本和装本地包, 等同无密码 root. 这是 yay 无人值守的代价: yay 内部自调 `sudo pacman -U`, 那个子进程拿不到 pyinfra 的 askpass
 - `buildDir` 在用户 `~/.cache/yay`, 不同用户名机器间不共享缓存
 
