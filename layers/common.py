@@ -227,8 +227,16 @@ def docker_setup():
 
     systemd.service(name="启 docker 服务", service="docker", enabled=True, running=True, _sudo=True)
 
+    # append=True 是必须的: 不传时 groups 是声明式的, 会把用户的附加组设成
+    # 恰好等于列表内容, 把 wheel 等原有组全部删掉 (连带丢失 sudo 权限)
     user = host.get_fact(User)
-    server.user(name="用户入 docker 组", user=user, groups=["docker"], _sudo=True)
+    server.user(
+        name="用户入 docker 组",
+        user=user,
+        groups=["docker"],
+        append=True,
+        _sudo=True,
+    )
 
 
 @deploy("桌面应用")
