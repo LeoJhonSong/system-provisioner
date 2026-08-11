@@ -48,6 +48,7 @@ just groups
 
 ### personal 层
 - `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, `~/.config/zsh` 软链
+- `fcitx5`: 拼音输入法 + 左 Shift 切换快捷键
 - `git`: user.name (hostname), user.email, credential.helper
 - `python`: pyenv, `.pythonrc.py`
 - `wakatime`: wakatime-cli, `.wakatime.cfg`
