@@ -94,13 +94,20 @@ export QT_STYLE_OVERRIDE=kvantum
 
 @deploy("包管理器")
 def pacman_setup():
-    """装 yay, 配置 yay, 给用户开 pacman 免密.
+    """配置镜像源, 装 yay, 配置 yay, 给用户开 pacman 免密.
 
     安全代价: NOPASSWD 限定 `/usr/bin/pacman` 不构成有效隔离. pacman 能执行包
     自带的安装脚本, `-U` 能装任意本地构建的包, 因此这条规则等同于给该用户无密码
     root. 采用它是因为 yay 拒绝以 root 运行且内部自己调 sudo, 无人值守时没有更
     好的选择 (paru 同样如此). 已知并接受.
     """
+    # 配置 Manjaro 中国镜像源 (按速度排序, 非交互式)
+    server.shell(
+        name="配置中国镜像源",
+        commands=["pacman-mirrors -c China -m rank"],
+        _sudo=True,
+    )
+
     pacman.packages(name="装 yay", packages=["yay"], _sudo=True)
 
     user = host.get_fact(User)
