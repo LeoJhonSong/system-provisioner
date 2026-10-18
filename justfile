@@ -16,6 +16,6 @@ check:
 
 # 列出所有组
 groups:
-    @echo "common: pacman cli dev input docker apps sddm claude"
+    @echo "common: pacman cli dev input docker apps browser im wps sddm claude"
     @echo "personal: zsh git python wakatime clang aria2 graphics media latex office extras disk"
     @echo "company: placeholder"

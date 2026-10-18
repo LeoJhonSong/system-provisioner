@@ -43,7 +43,10 @@ just groups
 - `dev`: base-devel, gdb, cmake, nodejs/npm, jdk, uv (含 uvx), just, ruff, github-cli, pip/npm 镜像, npm 全局前缀改到 `~/.local` (免 sudo)
 - `input`: fcitx5 全套, xorg-xhost, `.xprofile`, 拼音输入法 + 左 Shift 切换
 - `docker`: docker + compose, 服务自启, 用户入组
-- `apps`: VSCode, Typora, Edge, Snipaste, WPS, 微信/飞书/腾讯会议, plasma-x11-session
+- `apps`: VSCode, Typora, Snipaste, simplescreenrecorder, vlc, handbrake, rar, plasma-x11-session
+- `browser`: Edge
+- `im`: 微信/飞书/腾讯会议
+- `wps`: WPS 国内版全家
 - `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
 - `claude`: claude-code (官方脚本), cc-switch-cli-git, claude-history
 

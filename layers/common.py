@@ -77,25 +77,32 @@ APP_PACKAGES = [
     "plasma-x11-session",  # KDE X11 session, 很多软件需要 X11
     "gparted",
     "7zip",
+    "vlc",
+    "handbrake",
 ]
 
-# 桌面应用, AUR 部分
+# 桌面应用, AUR 部分 (浏览器, 即时通讯, WPS 各自成组, 见下)
 APP_AUR_PACKAGES = [
     "visual-studio-code-bin",
     "typora-free",
-    "microsoft-edge-stable-bin",
     "snipaste",
+    "simplescreenrecorder",
     "ventoy-bin",
     "rar",
-    # wps 四件套: 国内版本体 + 中文语言包 + 字体符号 + mime types
+]
+
+# browser 组. 单独成组以便最先装: 部署没跑完就能先登录各种账号, 自己搜索下载
+BROWSER_AUR_PACKAGES = ["microsoft-edge-stable-bin"]
+
+# im 组: 即时通讯与会议
+IM_AUR_PACKAGES = ["wechat-bin", "feishu-bin", "wemeet-bin"]
+
+# wps 组: 国内版本体 + 中文语言包 + 字体符号 + mime types
+WPS_AUR_PACKAGES = [
     "wps-office-cn",
     "wps-office-mui-zh-cn",
     "ttf-wps-fonts",
     "wps-office-mime-cn",
-    # 即时通讯与会议
-    "wechat-bin",
-    "feishu-bin",
-    "wemeet-bin",
 ]
 
 # 图形环境变量. 注意 .xprofile 只在 X11 会话下被 display manager source,
@@ -283,9 +290,27 @@ def docker_setup():
 
 @deploy("桌面应用")
 def apps():
-    """GUI 应用: VSCode, Typora, Edge, Snipaste, WPS, 即时通讯."""
+    """GUI 应用: VSCode, Typora, Snipaste, 录屏, 播放器."""
     pacman.packages(name="装桌面应用 (官方源)", packages=APP_PACKAGES, _sudo=True)
     aur.packages(APP_AUR_PACKAGES)
+
+
+@deploy("浏览器")
+def browser():
+    """Edge."""
+    aur.packages(BROWSER_AUR_PACKAGES)
+
+
+@deploy("即时通讯")
+def im():
+    """微信, 飞书, 腾讯会议."""
+    aur.packages(IM_AUR_PACKAGES)
+
+
+@deploy("WPS")
+def wps():
+    """WPS 国内版全家."""
+    aur.packages(WPS_AUR_PACKAGES)
 
 
 @deploy("SDDM X11")
@@ -325,6 +350,9 @@ GROUPS = {
     "input": input_method,
     "docker": docker_setup,
     "apps": apps,
+    "browser": browser,
+    "im": im,
+    "wps": wps,
     "sddm": sddm_x11,
     "claude": claude_tools,
 }

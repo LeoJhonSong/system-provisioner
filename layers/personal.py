@@ -34,8 +34,8 @@ GRAPHICS_PACKAGES = [
     "ghostscript",
 ]
 
-# media 组
-MEDIA_PACKAGES = ["vlc", "handbrake", "kdenlive", "wine", "winetricks"]
+# media 组. vlc / handbrake 已提到 common 层
+MEDIA_PACKAGES = ["kdenlive", "wine", "winetricks"]
 MEDIA_AUR_PACKAGES = [
     "davinci-resolve-studio",
     "audiorelay",
@@ -80,8 +80,6 @@ EXTRAS_PACKAGES = [
 ]
 EXTRAS_AUR_PACKAGES = [
     "github-desktop-bin",
-    "snipaste",
-    "simplescreenrecorder",
     "python-comtool",
     "ccze",
 ]
