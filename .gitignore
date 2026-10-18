@@ -2,3 +2,4 @@
 *.swp
 /.ansible/
 pyinfra-debug.log
+__pycache__/
