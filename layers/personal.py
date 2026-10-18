@@ -403,6 +403,9 @@ def robotics():
 @deploy("Windows 卷挂载")
 def disk_mount():
     """挂载 Windows 卷 (仅个人机有)."""
+    # /run 是 tmpfs, 挂载点每次开机都要重建; 开机时由 fstab 挂载 (systemd 会自建),
+    # 这里只管本次部署
+    files.directory(name="建挂载点", path="/run/media/Windows", _sudo=True)
     server.mount(
         name="挂 Windows 卷",
         path="/run/media/Windows",
@@ -417,7 +420,8 @@ def disk_mount():
         name="写 /etc/fstab",
         path="/etc/fstab",
         line="^LABEL=Windows",
-        replace="LABEL=Windows /run/media/Windows ntfs defaults 0 0",
+        # nofail: 盘不在或挂不上 (如 Windows 休眠) 时不让开机卡进紧急模式
+        replace="LABEL=Windows /run/media/Windows ntfs defaults,nofail 0 0",
         _sudo=True,
     )
 
