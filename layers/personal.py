@@ -235,6 +235,38 @@ def aria2_setup():
     )
 
 
+@deploy("Kvantum 主题")
+def kvantum_setup():
+    """装 kvantum 并把 Plasma 的控件样式设成 kvantum.
+
+    以前是在 .xprofile 里写 QT_STYLE_OVERRIDE=kvantum. 那个变量本身没被废弃,
+    但按 Kvantum 上游文档它是给"没有 Qt 样式配置工具的桌面"用的兜底手段; 在
+    KDE 上正规做法是 System Settings > Application Style > Widget Style 选
+    Kvantum, 落到 kdeglobals 的 [KDE] widgetStyle. 环境变量优先级更高, 会盖掉
+    Plasma 自己的设置, 反而让系统设置里改样式看起来"没反应", 所以这里改成写
+    kdeglobals.
+
+    kvantum 是 Qt6 版, Qt5 程序 (比如一些没迁完的老 KDE 应用) 另需 kvantum-qt5.
+    具体主题用 Kvantum Manager (kvantummanager) 挑, 那是 per-user 的 GUI 状态,
+    不在这里管.
+    """
+    pacman.packages(
+        name="装 kvantum",
+        packages=["kvantum", "kvantum-qt5"],
+        _sudo=True,
+    )
+
+    # 用 kwriteconfig6 而不是 files.line: widgetStyle 要落在 kdeglobals 的
+    # [KDE] 段里, 而这个 key 默认不在 ~/.config/kdeglobals (值由 look-and-feel
+    # 包提供), files.line 匹配不到就会 append 到文件末尾, 掉进最后一个 INI
+    # 段, 不生效. kwriteconfig6 认段, 没有会自己建.
+    # 已登录的 Plasma 会话不会立刻生效, 重新登录后生效.
+    server.shell(
+        name="Plasma 控件样式设为 kvantum",
+        commands=["kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle kvantum"],
+    )
+
+
 @deploy("图形软件")
 def graphics():
     """绘图与图形处理软件."""
@@ -308,6 +340,7 @@ GROUPS = {
     "wakatime": wakatime_setup,
     "clang": clang_setup,
     "aria2": aria2_setup,
+    "kvantum": kvantum_setup,
     "graphics": graphics,
     "media": media,
     "latex": latex_setup,

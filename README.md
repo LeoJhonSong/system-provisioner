@@ -41,7 +41,7 @@ just groups
 - `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置, pacman 免密 sudoers
 - `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq
 - `dev`: base-devel, gdb, cmake, nodejs/npm, jdk, uv (含 uvx), just, ruff, github-cli, pip/npm 镜像, npm 全局前缀改到 `~/.local` (免 sudo)
-- `input`: fcitx5 全套, kvantum, `.xprofile`, 拼音输入法 + 左 Shift 切换
+- `input`: fcitx5 全套, xorg-xhost, `.xprofile`, 拼音输入法 + 左 Shift 切换
 - `docker`: docker + compose, 服务自启, 用户入组
 - `apps`: VSCode, Typora, Edge, Snipaste, WPS, 微信/飞书/腾讯会议, plasma-x11-session
 - `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
@@ -54,6 +54,7 @@ just groups
 - `wakatime`: wakatime-cli, `.wakatime.cfg`
 - `clang`: clang, bear, `.clang-format`
 - `aria2`: 配置软链
+- `kvantum`: kvantum + kvantum-qt5, Plasma widgetStyle 设为 kvantum
 - `graphics`: drawio, gimp, inkscape, blender
 - `media`: vlc, handbrake, kdenlive, wine, davinci-resolve, deadbeef
 - `latex`: texlive 全套

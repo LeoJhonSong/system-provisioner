@@ -61,14 +61,15 @@ NPM_PREFIX = "${HOME}/.local"
 PROFILE_BLOCK = """export PATH="$HOME/.local/bin:$PATH"
 """
 
-# 中文输入法与主题. fcitx5-im 是组名, pacman.packages 内部会用
-# PacmanUnpackGroup 展开
+# 中文输入法与字体. fcitx5-im 是组名, pacman.packages 内部会用
+# PacmanUnpackGroup 展开.
+# xorg-xhost 提供 xhost, .xprofile 里的 `xhost +local:` 需要它
 INPUT_PACKAGES = [
     "fcitx5-im",
     "fcitx5-material-color",
     "fcitx5-chinese-addons",
-    "kvantum",
     "wqy-microhei",
+    "xorg-xhost",
 ]
 
 # 桌面应用, 官方源部分
@@ -97,16 +98,26 @@ APP_AUR_PACKAGES = [
     "wemeet-bin",
 ]
 
-# 图形环境变量. fcitx 三个是输入法接入各 GUI 工具包的开关,
-# QT_STYLE_OVERRIDE 让 dolphin/kate 这类 Qt 程序走 kvantum 主题
+# 图形环境变量. 注意 .xprofile 只在 X11 会话下被 display manager source,
+# Wayland 会话完全不读它, 本仓库 sddm 组把默认会话设成 plasmax11 所以够用.
+#
+# fcitx 三个变量是输入法接入各 GUI 工具包的开关. X11 下三个都要:
+# XMODIFIERS 走 XIM 管旧的 X 程序, GTK_IM_MODULE / QT_IM_MODULE 让 GTK/Qt
+# 直接加载 fcitx 的 im module. 上游 fcitx5 文档到现在仍把三个作为一套推荐.
+# (Wayland 下反而不该全局设 GTK_IM_MODULE / QT_IM_MODULE, 会把原生 Wayland
+#  客户端从 text-input 协议踢回 module 路径; 只有 XWayland 程序需要, 且该
+#  按程序设. 将来真切到 Wayland 时这个 block 要重做.)
+#
+# xhost +local: 放开本机非当前用户 (含 root 与容器里同 UID 之外的进程) 连
+# X server, 少数以别的身份起的 GUI 程序需要
 XPROFILE_BLOCK = """# for fcitx input method
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 # override QT scale
 export QT_SCREEN_SCALE_FACTORS=1
-# override QT style of applications like dolphin, kate
-export QT_STYLE_OVERRIDE=kvantum
+# allow local non-current-user processes to reach the X server
+xhost +local: >/dev/null 2>&1
 """
 
 
@@ -227,7 +238,7 @@ def dev():
 
 @deploy("输入法")
 def input_method():
-    """fcitx5 全套与图形环境变量, 拼音输入法 + 左 Shift 切换."""
+    """fcitx5 全套, xhost, 图形环境变量, 拼音输入法 + 左 Shift 切换."""
     pacman.packages(name="装输入法", packages=INPUT_PACKAGES, _sudo=True)
 
     home = host.get_fact(Home)
