@@ -19,11 +19,17 @@
 # 个人机全量
 just personal
 
+# 远程个人机 (传 IP 或 hostname, 会提示输 SSH 密码和 sudo 密码)
+just personal 192.168.2.101
+
+# 远程个人机用户名不是 naviai 时
+just user=leo personal 192.168.2.101
+
 # 个人机只跑 zsh 和 cli 组
-just personal only=zsh,cli
+just personal @local --data only=zsh,cli
 
 # 个人机跳过 latex 和 media 组
-just personal skip=latex,media
+just personal @local --data skip=latex,media
 
 # 公司机 (传 IP 或 hostname, 会提示输 SSH 密码和 sudo 密码)
 just company 192.168.2.99
@@ -53,7 +59,7 @@ just groups
 - `claude`: claude-code (官方脚本), cc-switch-cli (官方脚本), claude-history, 状态栏 (ccstatusline + git 信息)
 
 ### personal 层
-- `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, `~/.config/zsh` 软链
+- `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, 部署仓库 clone 到 `~/projects`, `.zshrc` 骨架 (非本仓库所写的先备份再重写)
 - `git`: user.name (hostname), user.email, credential.helper
 - `python`: pyenv, `.pythonrc.py`
 - `wakatime`: wakatime-cli, `.wakatime.cfg`
@@ -73,7 +79,7 @@ just groups
 ## 后置条件
 
 - zsh 作为默认 shell (需手动 `chsh -s /bin/zsh`)
-- `~/.zshrc` 为本机私有配置, 仓库不跟踪; `~/.config/zsh/default.zsh` 为同步配置
+- `~/.zshrc` 为本机私有配置, 仓库不跟踪; `~/projects/system-provisioner/files/personal/zsh/default.zsh` 为同步配置, 由 `.zshrc` 在 manjaro 配置之后、私有配置之前 source
 - AUR 包构建失败不中断部署, 仅记 warning
 - yay `config.json` 只改 `removemake` 和 `provides` 两键, 其余保持 yay 自己写的值
 

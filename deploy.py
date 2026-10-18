@@ -1,7 +1,7 @@
 """system-provisioner 部署入口.
 
 用法:
-    个人机: pyinfra @local deploy.py --data profile=personal [--data proxy=http://...]
+    个人机: pyinfra @local|<ip> deploy.py --data profile=personal [--data proxy=http://...]
     公司机: pyinfra <ip> deploy.py --data profile=company --user <u> --ssh-password-prompt --sudo --use-sudo-password
 
 选择性执行:

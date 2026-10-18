@@ -6,12 +6,12 @@
 from __future__ import annotations
 
 from io import StringIO
-from pathlib import Path
 
 import aur
 from pyinfra import host
 from pyinfra.api import deploy
 from pyinfra.facts.files import File
+from pyinfra.facts.files import FindInFile
 from pyinfra.facts.server import Home
 from pyinfra.facts.server import Hostname
 from pyinfra.operations import files
@@ -20,8 +20,24 @@ from pyinfra.operations import pacman
 from pyinfra.operations import server
 from pyinfra.operations import systemd
 
-# 仓库根目录绝对路径, 用于构造 ~/.config/zsh 软链的 target
-REPO_ROOT = Path.cwd().resolve()
+# 部署仓库在目标机上的位置 (相对家目录). 本机就是控制端这份仓库本身;
+# 远程个人机由 _clone_repo 拉下来. 软链与 source 都指向目标机上的这份
+REPO_DIR = "projects/system-provisioner"
+REPO_URL = "https://github.com/LeoJhonSong/system-provisioner"
+
+# .zshrc 引用的仓库内 zsh 配置, 也用作判断 .zshrc 是否为本仓库所写
+ZSH_DEFAULT = f"{REPO_DIR}/files/personal/zsh/default.zsh"
+
+
+def _clone_repo(home: str) -> str:
+    """确保部署仓库在目标机 ~/projects 下, 返回其绝对路径.
+
+    只 clone 不 pull, 与 Shell-Scripts 一致. 用到仓库文件的组各自调用,
+    单独跑某组时也不会出现悬空软链; 重复声明只是 no-op.
+    """
+    git.repo(name="clone system-provisioner", src=REPO_URL, dest=f"{home}/{REPO_DIR}", pull=False)
+    return f"{home}/{REPO_DIR}"
+
 
 # graphics 组
 GRAPHICS_PACKAGES = [
@@ -88,7 +104,8 @@ EXTRAS_AUR_PACKAGES = [
 def _zshrc_skeleton_template(home: str, proxy: str) -> str:
     """生成 .zshrc 骨架模板.
 
-    source manjaro 打底配置, 再 source 仓库内同步的定制. 可选注入 PROXY 变量.
+    顺序: manjaro 打底配置 → 仓库内定制 (覆盖 manjaro 默认值) → 本机私有部分
+    (可选 PROXY, 及日后手加的内容, 覆盖仓库定制).
     """
     lines = [
         "# source manjaro-zsh-config",
@@ -99,18 +116,16 @@ def _zshrc_skeleton_template(home: str, proxy: str) -> str:
         "  source /usr/share/zsh/manjaro-zsh-prompt",
         "fi",
         "",
+        "# source 部署仓库内的定制配置",
+        f"if [[ -f {home}/{ZSH_DEFAULT} ]]; then",
+        f"  source {home}/{ZSH_DEFAULT}",
+        "fi",
+        "",
+        "# ---- 以下为本机私有配置 ----",
+        "",
     ]
     if proxy:
         lines.extend([f'export PROXY="{proxy}"', ""])
-    lines.extend(
-        [
-            "# source 仓库内同步的定制配置",
-            f"if [[ -f {home}/.config/zsh/default.zsh ]]; then",
-            f"  source {home}/.config/zsh/default.zsh",
-            "fi",
-            "",
-        ]
-    )
     return "\n".join(lines)
 
 
@@ -147,22 +162,23 @@ def zsh_setup():
         pull=False,
     )
 
-    # ~/.config/zsh 软链到仓库内 files/personal/zsh, 编辑即生效且改动回流
-    files.link(
-        name="软链 ~/.config/zsh",
-        path=f"{home}/.config/zsh",
-        target=str(REPO_ROOT / "files/personal/zsh"),
-    )
+    _clone_repo(home)
 
-    # .zshrc 骨架: 判存, 不存在才 put, 已存在完全不动 (本机私有改动)
-    if not host.get_fact(File, path=f"{home}/.zshrc"):
-        proxy = host.data.get("proxy", "")
-        files.template(
-            name="写 .zshrc 骨架",
-            src=StringIO(_zshrc_skeleton_template(home, proxy)),
-            dest=f"{home}/.zshrc",
-            mode="644",
-        )
+    # .zshrc: 不是本仓库写的 (没引用仓库内 default.zsh, 如 Manjaro 自带的)
+    # 就整体备份后重写骨架; 已是本仓库写的则不动 (保留本机私有改动)
+    zshrc = f"{home}/.zshrc"
+    if host.get_fact(File, path=zshrc) and host.get_fact(FindInFile, path=zshrc, pattern=ZSH_DEFAULT):
+        return
+    server.shell(
+        name="备份原 .zshrc",
+        commands=[f'[ -f {zshrc} ] && cp -a {zshrc} {zshrc}.bak.$(date +%Y%m%d%H%M%S) || true'],
+    )
+    files.template(
+        name="写 .zshrc 骨架",
+        src=StringIO(_zshrc_skeleton_template(home, host.data.get("proxy", ""))),
+        dest=zshrc,
+        mode="644",
+    )
 
 
 @deploy("git")
@@ -226,10 +242,11 @@ def aria2_setup():
     """aria2 配置与自启."""
     home = host.get_fact(Home)
 
+    repo = _clone_repo(home)
     files.link(
         name="软链 aria2.conf",
         path=f"{home}/.config/aria2/aria2.conf",
-        target=str(REPO_ROOT / "files/personal/aria2.conf"),
+        target=f"{repo}/files/personal/aria2.conf",
     )
 
 
@@ -292,12 +309,13 @@ def office():
     aur.packages(OFFICE_AUR_PACKAGES)
 
     # OneDriveGUI 自启
-    files.put(
+    # 不用 files.put: 它的 src 读的是控制端的文件, 而 .desktop 由上面的
+    # AUR 包装到目标机, 只能在目标机上拷
+    server.shell(
         name="OneDriveGUI 自启",
-        src="/usr/share/applications/OneDriveGUI.desktop",
-        dest=f"{home}/.config/autostart/OneDriveGUI.desktop",
-        mode="644",
-        _sudo_user=home.split("/")[-1],
+        commands=[
+            f"install -Dm644 /usr/share/applications/OneDriveGUI.desktop {home}/.config/autostart/OneDriveGUI.desktop"
+        ],
     )
 
 
