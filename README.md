@@ -61,7 +61,7 @@ just groups
 ### personal 层
 - `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, 部署仓库 clone 到 `~/projects`, `.zshrc` 骨架 (非本仓库所写的先备份再重写)
 - `git`: user.name (hostname), user.email, credential.helper
-- `python`: pyenv, `.pythonrc.py`
+- `python`: pyenv, pyenv-virtualenv, tk (pyenv 编 Python 时 tkinter 需要), `.pythonrc.py`
 - `wakatime`: wakatime-cli, `.wakatime.cfg`
 - `clang`: clang, bear, `.clang-format`
 - `aria2`: 配置软链

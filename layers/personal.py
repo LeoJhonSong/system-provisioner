@@ -225,10 +225,13 @@ def git_setup():
 
 @deploy("python")
 def python_setup():
-    """pyenv 与 .pythonrc.py."""
+    """pyenv, pyenv-virtualenv 与 .pythonrc.py."""
     home = host.get_fact(Home)
 
-    pacman.packages(name="装 pyenv", packages=["pyenv"], _sudo=True)
+    # tk 是 pyenv 编译 Python 时 tkinter 模块的构建依赖, 没有它编出来的
+    # Python 缺 _tkinter
+    pacman.packages(name="装 pyenv", packages=["pyenv", "tk"], _sudo=True)
+    aur.packages(["pyenv-virtualenv"])
     files.put(
         name="放 .pythonrc.py",
         src="files/personal/.pythonrc.py",

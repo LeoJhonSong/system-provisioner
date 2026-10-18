@@ -72,11 +72,10 @@ if command -v yazi &> /dev/null; then
     }
 fi
 
-# pyenv init
-if [ -f ~/.pyenv/bin/pyenv ]; then
+# pyenv init. pyenv 由 pacman 装在 /usr/bin, 不是 ~/.pyenv/bin
+if command -v pyenv &> /dev/null; then
     export PYENV_ROOT=$HOME/.pyenv
-    export PATH=$PYENV_ROOT/bin:$PATH
-    eval "$(pyenv init --path)"
     eval "$(pyenv init -)"
+    command -v pyenv-virtualenv-init &> /dev/null && eval "$(pyenv virtualenv-init -)"
 fi
 
