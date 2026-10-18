@@ -77,6 +77,8 @@ just groups
 - `robotics`: foxglove, python-rosbags
 - `disk`: Windows 卷挂载
 
+未纳入部署、按需手装的包见 [OPTIONAL_PACKAGES.md](OPTIONAL_PACKAGES.md). 字体阿里巴巴普惠体, Operator Mono 无包, 是手动放进 `~/.local/share/fonts` 的, 不在仓库里.
+
 ### company 层
 - `placeholder`: 占位 (空)
 
