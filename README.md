@@ -37,6 +37,8 @@ just groups
 
 ## 组名清单
 
+执行顺序: 先按 `deploy.py` 的 `PRIORITY` 跑 `pacman dev browser input claude im wps office`, 好让部署没跑完就能开始干活; 其余组随后按下列顺序跑.
+
 ### common 层
 - `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置, pacman 免密 sudoers
 - `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq

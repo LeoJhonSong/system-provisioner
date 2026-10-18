@@ -24,6 +24,12 @@ LAYERS = {
     "company": [common, company],
 }
 
+# 优先执行的组, 按此顺序最先跑, 其余组随后按各层 GROUPS 的定义顺序跑.
+# 目标是部署没跑完就能开始干活: 镜像源与系统升级 → 构建工具 (AUR 依赖
+# base-devel) → 浏览器 (先登录账号, 自己搜索下载) → 输入法 → claude
+# → 即时通讯 → 办公. 当前 profile 没有的组跳过
+PRIORITY = ["pacman", "dev", "browser", "input", "claude", "im", "wps", "office"]
+
 
 def main():
     """主入口: 读 profile, 过滤组, 依次调用."""
@@ -40,6 +46,8 @@ def main():
     all_groups = {}
     for layer in layers:
         all_groups.update(layer.GROUPS)
+    first = {g: all_groups[g] for g in PRIORITY if g in all_groups}
+    all_groups = first | all_groups
 
     # 过滤: only 与 skip 互斥, 都不传 = 全量
     only = host.data.get("only", "")
