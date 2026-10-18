@@ -332,14 +332,67 @@ def sddm_x11():
 @deploy("Claude 工具")
 def claude_tools():
     """claude-code, cc-switch-cli, claude-history."""
+    home = host.get_fact(Home)
+
     # claude-code AUR 无官方包, 用官方脚本
     server.shell(
         name="装 claude-code",
         commands=["command -v claude || curl -fsSL https://claude.ai/install.sh | bash"],
     )
 
-    # cc-switch-cli 与 claude-history 从 AUR 装
-    aur.packages(["cc-switch-cli-git", "claude-history"])
+    # cc-switch-cli 用官方脚本装预编译二进制 (装到 ~/.local/bin/cc-switch).
+    # 守卫必须留: 脚本检测到已装且无 tty 时直接 exit 1. 判存用绝对路径而非
+    # command -v, 因为 pyinfra 的非登录 shell 里 PATH 未必含 ~/.local/bin
+    server.shell(
+        name="装 cc-switch-cli",
+        commands=[
+            'test -x "$HOME/.local/bin/cc-switch" || '
+            "curl -fsSL https://github.com/SaladDay/cc-switch-cli/releases/latest/download/install.sh | bash"
+        ],
+    )
+
+    aur.packages(["claude-history"])
+
+    cc_switch = f"{home}/.local/bin/cc-switch"
+
+    # 状态栏由两个脚本拼成: statusline-command.sh 出 git 信息,
+    # statusline-wrapper.sh 把同一份 stdin JSON 再喂给 ccstatusline 取上下文占比
+    # npm -g 前缀由 dev 组改成了 ~/.local, 所以免 sudo 且判存走绝对路径
+    # (pyinfra 的非登录 shell 里 PATH 未必含 ~/.local/bin, command -v 会误判).
+    # 单独只跑 claude 组时前缀可能还没配, 那就退回 npm 的默认前缀, 装不上会
+    # 报错而不是静默装错地方 —— 正常按顺序跑全量部署没这个问题
+    server.shell(
+        name="全局装 ccstatusline",
+        commands=[f'test -x "{home}/.local/bin/ccstatusline" || npm install -g ccstatusline'],
+    )
+
+    for filename in ("statusline-command.sh", "statusline-wrapper.sh"):
+        files.put(
+            name=f"放 {filename}",
+            src=f"files/common/claude/{filename}",
+            dest=f"{home}/.claude/{filename}",
+            mode="755",
+        )
+
+    files.put(
+        name="放 ccstatusline 配置",
+        src="files/common/claude/ccstatusline-settings.json",
+        dest=f"{home}/.config/ccstatusline/settings.json",
+        mode="644",
+    )
+
+    # statusLine 与 effortLevel 不直接写 settings.json: 交给 cc-switch 的通用配置
+    # 片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
+    files.put(
+        name="放通用配置片段",
+        src="files/common/claude/common-snippet.json",
+        dest=f"{home}/.cc-switch/common-snippet.json",
+        mode="644",
+    )
+    server.shell(
+        name="注入通用配置片段",
+        commands=[f"{cc_switch} config common set -a claude --file {home}/.cc-switch/common-snippet.json"],
+    )
 
 
 # 组名注册. deploy.py 按 only/skip 过滤

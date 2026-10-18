@@ -50,7 +50,7 @@ just groups
 - `im`: 微信/飞书/腾讯会议
 - `wps`: WPS 国内版全家
 - `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
-- `claude`: claude-code (官方脚本), cc-switch-cli-git, claude-history
+- `claude`: claude-code (官方脚本), cc-switch-cli (官方脚本), claude-history, 状态栏 (ccstatusline + git 信息)
 
 ### personal 层
 - `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, `~/.config/zsh` 软链

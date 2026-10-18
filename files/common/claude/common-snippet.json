@@ -1,0 +1,7 @@
+{
+  "effortLevel": "medium",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-wrapper.sh"
+  }
+}
