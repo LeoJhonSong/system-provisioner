@@ -34,7 +34,9 @@ CLI_PACKAGES = [
     "yq",  # jq 的 YAML/XML/TOML 包装, 依赖 jq
 ]
 
-# 开发工具链
+# 开发工具链.
+# uv 一个包就带 uv 和 uvx 两个二进制, 不用 (也不能) 另外装 uvx: AUR 里那个
+# uvx 是别的东西, 官方源没有
 DEV_PACKAGES = [
     "base-devel",
     "gdb",
@@ -42,7 +44,22 @@ DEV_PACKAGES = [
     "nodejs",
     "npm",
     "jdk-openjdk",
+    "uv",
+    "just",
+    "ruff",
+    "github-cli",
 ]
+
+# npm -g 的安装前缀. 默认是 /usr, 装全局包要 sudo, 且包会跟 pacman 管的
+# /usr/lib/node_modules 混在一起. 改到 ~/.local 后 npm -g 落在
+# ~/.local/bin, 免 sudo 且不碰系统目录
+NPM_PREFIX = "${HOME}/.local"
+
+# ~/.local/bin 入 PATH. 写 ~/.profile 而不是 .zshrc: 前者 login shell 与图形
+# 会话都读, 且 common 层不该假定用户用 zsh (personal 的 default.zsh 已经自己
+# export 过, 重复无害)
+PROFILE_BLOCK = """export PATH="$HOME/.local/bin:$PATH"
+"""
 
 # 中文输入法与主题. fcitx5-im 是组名, pacman.packages 内部会用
 # PacmanUnpackGroup 展开
@@ -165,7 +182,7 @@ def cli():
 
 @deploy("开发工具链")
 def dev():
-    """编译工具链, node 与 java, 以及 pip/npm/yarn 的国内镜像."""
+    """编译工具链, node 与 java, 以及 pip/npm 的国内镜像."""
     pacman.packages(name="装开发工具链", packages=DEV_PACKAGES, _sudo=True)
 
     home = host.get_fact(Home)
@@ -187,20 +204,25 @@ def dev():
         replace="registry=https://registry.npmmirror.com",
     )
 
-    # yarn 需全局装 (npm -g 需 sudo)
-    server.shell(
-        name="全局装 yarn",
-        commands=["command -v yarn || npm install -g yarn"],
-        _sudo=True,
+    # npm -g 的前缀改到 ~/.local, 之后所有 npm install -g 都不再需要 sudo.
+    # npm 会展开 npmrc 值里的 ${HOME}, 所以这里存的是可移植的字面量
+    files.line(
+        name="配置 npm 全局前缀",
+        path=f"{home}/.npmrc",
+        line="^prefix=",
+        replace=f"prefix={NPM_PREFIX}",
     )
 
-    files.file(name="touch .yarnrc", path=f"{home}/.yarnrc", mode="644", touch=True)
-    files.line(
-        name="配置 yarn 镜像",
-        path=f"{home}/.yarnrc",
-        line='^registry "',
-        replace='registry "https://registry.npmmirror.com"',
+    # ~/.local/bin 入 PATH, 否则 npm -g 装的东西调不到
+    files.block(
+        name="~/.local/bin 入 PATH",
+        path=f"{home}/.profile",
+        content=PROFILE_BLOCK,
+        marker="# {mark} MANAGED BLOCK path",
     )
+
+    # 不装 yarn: 它和 npm 是同类竞品而非上位替代, 手上的项目 lockfile 全是
+    # package-lock.json, 没有 yarn.lock. 真遇到用 yarn 的仓库再说
 
 
 @deploy("输入法")
