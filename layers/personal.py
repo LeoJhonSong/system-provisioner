@@ -53,11 +53,10 @@ GRAPHICS_PACKAGES = [
 # media 组. vlc / handbrake 已提到 common 层
 MEDIA_PACKAGES = ["kdenlive", "wine", "winetricks"]
 MEDIA_AUR_PACKAGES = [
-    "davinci-resolve-studio",
+    # davinci-resolve-studio: 故意不装. 这个 PKGBUILD 不下载安装包, 要自己去
+    # 官网 (需登录) 下 DaVinci_Resolve_Studio_*_Linux.zip 手动放进 ~/.cache/yay
+    # 对应目录后再 yay -S. 留个记录, 别忘了有这东西.
     "audiorelay",
-    "deadbeef",
-    "deadbeef-plugin-customizabletb-gtk3-git",
-    "deadbeef-plugin-waveform-gtk3-git",
 ]
 
 # latex 组
@@ -98,6 +97,40 @@ EXTRAS_AUR_PACKAGES = [
     "github-desktop-bin",
     "python-comtool",
     "ccze",
+    "appimagelauncher",
+]
+
+# fonts 组. 阿里巴巴普惠体, Operator Mono 无包, 手动放 ~/.local/share/fonts
+FONT_PACKAGES = ["ttf-firacode-nerd"]
+
+# localbin 组: 放进 ~/.local/bin 的自写小脚本 (files/personal/bin/)
+LOCAL_BIN_SCRIPTS = [
+    "dde-file-manager",  # 微信 "打开所在文件夹" 调的是 dde-file-manager, 转给 dolphin
+    "snipaste-launcher",
+]
+
+# remote 组: 远程桌面, 代理, VPN, 内网穿透
+REMOTE_PACKAGES = [
+    "networkmanager-openconnect",
+    "networkmanager-vpnc",
+    "networkmanager-openvpn",
+    "networkmanager-l2tp",
+]
+# frpc 只装不配: 配置在 /etc/frp/frpc.toml, 需手写. 2026-10-06 本机经 frp
+# 映射到公网的 22 端口被 SSH 爆破入侵, 不要再映射 sshd, 远程登录走 tailscale
+REMOTE_AUR_PACKAGES = [
+    "anydesk-bin",
+    "rustdesk-bin",
+    "todesk-bin",
+    "clash-verge-rev-bin",
+    "openvpn3",
+    "frpc-bin",
+]
+
+# robotics 组
+ROBOTICS_AUR_PACKAGES = [
+    "foxglove-bin",
+    "python-rosbags",
 ]
 
 
@@ -326,6 +359,47 @@ def extras():
     aur.packages(EXTRAS_AUR_PACKAGES)
 
 
+@deploy("字体")
+def fonts():
+    """FiraCode Nerd Font."""
+    pacman.packages(name="装字体", packages=FONT_PACKAGES, _sudo=True)
+
+
+@deploy("~/.local/bin")
+def local_bin():
+    """自写小脚本与 dev-browser.
+
+    dev-browser 走 npm -g, 依赖 common 层 dev 组把 npm 前缀改到 ~/.local.
+    判存用绝对路径, 理由同 common 层的 ccstatusline.
+    """
+    home = host.get_fact(Home)
+    files.directory(name="建 ~/.local/bin", path=f"{home}/.local/bin", mode="755")
+    for filename in LOCAL_BIN_SCRIPTS:
+        files.put(
+            name=f"放 {filename}",
+            src=f"files/personal/bin/{filename}",
+            dest=f"{home}/.local/bin/{filename}",
+            mode="755",
+        )
+    server.shell(
+        name="全局装 dev-browser",
+        commands=[f'test -x "{home}/.local/bin/dev-browser" || npm install -g dev-browser'],
+    )
+
+
+@deploy("远程与网络")
+def remote():
+    """远程桌面 (anydesk, rustdesk, todesk), clash, VPN 插件, frpc."""
+    pacman.packages(name="装 VPN 插件 (官方源)", packages=REMOTE_PACKAGES, _sudo=True)
+    aur.packages(REMOTE_AUR_PACKAGES)
+
+
+@deploy("机器人工具")
+def robotics():
+    """foxglove 与 rosbag 读写库."""
+    aur.packages(ROBOTICS_AUR_PACKAGES)
+
+
 @deploy("Windows 卷挂载")
 def disk_mount():
     """挂载 Windows 卷 (仅个人机有)."""
@@ -362,5 +436,9 @@ GROUPS = {
     "latex": latex_setup,
     "office": office,
     "extras": extras,
+    "fonts": fonts,
+    "localbin": local_bin,
+    "remote": remote,
+    "robotics": robotics,
     "disk": disk_mount,
 }

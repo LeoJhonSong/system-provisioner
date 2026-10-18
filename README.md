@@ -67,10 +67,14 @@ just groups
 - `aria2`: 配置软链
 - `kvantum`: kvantum + kvantum-qt5, Plasma widgetStyle 设为 kvantum
 - `graphics`: drawio, gimp, inkscape, blender
-- `media`: vlc, handbrake, kdenlive, wine, davinci-resolve, deadbeef
+- `media`: kdenlive, wine, audiorelay (davinci-resolve-studio 需手动下载安装包, 代码里只留注释)
 - `latex`: texlive 全套
 - `office`: zotero, onedrive, linuxqq, zoom
-- `extras`: github-desktop, 录屏工具, 串口工具, samba, filezilla
+- `extras`: github-desktop, kooha, screenkey, 串口工具, samba, filezilla, appimagelauncher
+- `fonts`: FiraCode Nerd Font
+- `localbin`: `~/.local/bin` 自写脚本 (dde-file-manager 转 dolphin, snipaste-launcher), dev-browser (npm -g)
+- `remote`: anydesk, rustdesk, todesk, clash-verge-rev, openvpn3, frpc, NetworkManager VPN 插件 (openconnect/vpnc/openvpn/l2tp)
+- `robotics`: foxglove, python-rosbags
 - `disk`: Windows 卷挂载
 
 ### company 层
