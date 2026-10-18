@@ -25,12 +25,10 @@ export PATH=$HOME/.local/bin/:$HOME/projects/Shell-Scripts/:$PATH
 
 # Set personal aliases
 alias exp='export PATH=$(pwd):$PATH'
-alias lt='ls --tree'
 alias l='ls -a'
 alias ll='ls -al'
 alias ys='yay -S'
 command -v bat &> /dev/null && alias cat='bat --style grid'
-command -v lsd &> /dev/null && alias ls='lsd'
 alias p='python'
 
 # fzf config
@@ -51,7 +49,7 @@ if command -v fzf &> /dev/null; then
         local command=$1
         shift
         case "$command" in
-            cd)             fzf "$@" --preview 'lsd --tree {} | head -200' ;;
+            cd)             fzf "$@" --preview 'ls -la --color=always {} | head -200' ;;
             export|unset)   fzf "$@" --preview "eval 'echo \$'{}" ;;
             ssh)            fzf "$@" --preview 'dig {}' ;;
             vim)            fzf "$@" --preview 'bat --style=numbers --color=always --line-range :500 {}' ;;

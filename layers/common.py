@@ -23,7 +23,6 @@ import yay
 CLI_PACKAGES = [
     "tmux",
     "bat",
-    "lsd",
     "yazi",
     "fd",
     "fzf",
@@ -31,6 +30,8 @@ CLI_PACKAGES = [
     "curl",
     "wget",
     "git-lfs",
+    "jq",
+    "yq",  # jq 的 YAML/XML/TOML 包装, 依赖 jq
 ]
 
 # 开发工具链

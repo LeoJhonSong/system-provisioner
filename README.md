@@ -39,7 +39,7 @@ just groups
 
 ### common 层
 - `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置, pacman 免密 sudoers
-- `cli`: tmux, bat, lsd, yazi, fd, fzf, nmap, curl, wget, git-lfs
+- `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq
 - `dev`: base-devel, gdb, cmake, nodejs/npm/yarn, jdk, pip/npm/yarn 镜像
 - `input`: fcitx5 全套, kvantum, `.xprofile`, 拼音输入法 + 左 Shift 切换
 - `docker`: docker + compose, 服务自启, 用户入组
