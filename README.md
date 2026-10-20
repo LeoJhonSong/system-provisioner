@@ -41,6 +41,8 @@ just check
 just groups
 ```
 
+`just personal` / `just company` 不再停下来等确认变更计划 (带 `-y`), 跑完后由 `tools/pyinfra_table.py` 按终端显示宽度重排汇总表, 修正 pyinfra 自带表格遇中文操作名错位的问题.
+
 ## 组名清单
 
 执行顺序: 先按 `deploy.py` 的 `PRIORITY` 跑 `pacman dev browser input claude im wps office`, 好让部署没跑完就能开始干活; 其余组随后按下列顺序跑.
