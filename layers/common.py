@@ -32,6 +32,7 @@ CLI_PACKAGES = [
     "git-lfs",
     "jq",
     "yq",  # jq 的 YAML/XML/TOML 包装, 依赖 jq
+    "xclip",
 ]
 
 # 开发工具链.

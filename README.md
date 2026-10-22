@@ -49,7 +49,7 @@ just groups
 
 ### common 层
 - `pacman`: 中国镜像源, 系统升级, yay 与 yay 配置, pacman 免密 sudoers
-- `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq
+- `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq, xclip
 - `dev`: base-devel, gdb, cmake, nodejs/npm, jdk, uv (含 uvx), just, ruff, github-cli, pip/npm 镜像, npm 全局前缀改到 `~/.local` (免 sudo)
 - `input`: fcitx5 全套, xorg-xhost, `.xprofile`, 拼音输入法 + 左 Shift 切换
 - `docker`: docker + compose, 服务自启, 用户入组
@@ -74,7 +74,7 @@ just groups
 - `office`: zotero, onedrive, linuxqq, zoom
 - `extras`: github-desktop, kooha, screenkey, 串口工具, samba, filezilla, appimagelauncher
 - `fonts`: FiraCode Nerd Font
-- `localbin`: `~/.local/bin` 自写脚本 (dde-file-manager 转 dolphin, snipaste-launcher), dev-browser (npm -g)
+- `localbin`: `~/.local/bin` 自写脚本 (dde-file-manager 转 dolphin, snipaste-launcher), dev-browser (npm -g, 浏览器由 `files/personal/dev-browser-install.sh` 用 curl 预下载)
 - `remote`: anydesk, rustdesk, todesk, clash-verge-rev, openvpn3, frpc, NetworkManager VPN 插件 (openconnect/vpnc/openvpn/l2tp)
 - `robotics`: foxglove, python-rosbags
 - `disk`: Windows 卷挂载

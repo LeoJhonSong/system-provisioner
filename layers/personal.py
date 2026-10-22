@@ -373,9 +373,12 @@ def local_bin():
     """自写小脚本与 dev-browser.
 
     dev-browser 走 npm -g, 依赖 common 层 dev 组把 npm 前缀改到 ~/.local.
-    判存用绝对路径, 理由同 common 层的 ccstatusline.
+    官方命令装不全 (原生二进制与浏览器常下不下来), 由仓库里的脚本代装,
+    细节见脚本注释. 判存看 headless shell 的完成标记, 它是最后装上的
     """
     home = host.get_fact(Home)
+    repo = _clone_repo(home)
+    pacman.packages(name="装 unzip (解压浏览器包)", packages=["unzip"], _sudo=True)
     files.directory(name="建 ~/.local/bin", path=f"{home}/.local/bin", mode="755")
     for filename in LOCAL_BIN_SCRIPTS:
         files.put(
@@ -385,8 +388,11 @@ def local_bin():
             mode="755",
         )
     server.shell(
-        name="全局装 dev-browser",
-        commands=[f'test -x "{home}/.local/bin/dev-browser" || npm install -g dev-browser'],
+        name="装 dev-browser 与浏览器",
+        commands=[
+            f"ls {home}/.cache/ms-playwright/chromium_headless_shell-*/INSTALLATION_COMPLETE"
+            f' >/dev/null 2>&1 || bash "{repo}/files/personal/dev-browser-install.sh"'
+        ],
     )
 
 
