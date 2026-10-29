@@ -92,6 +92,7 @@ EXTRAS_PACKAGES = [
     "aria2",
     "manjaro-settings-samba",
     "filezilla",
+    "xorg-xinput",
 ]
 EXTRAS_AUR_PACKAGES = [
     "github-desktop-bin",
