@@ -106,6 +106,18 @@ WPS_AUR_PACKAGES = [
     "wps-office-mime-cn",
 ]
 
+WPS_LANG_SCRIPT = r"""f="$HOME/.config/Kingsoft/Office.conf"
+mkdir -p "$(dirname "$f")" && touch "$f"
+awk '/^\[/{s=($0=="[General]")} s && $0=="languages=zh_CN"{ok=1} END{exit !ok}' "$f" && exit 0
+awk '
+/^\[/ {s = ($0 == "[General]")}
+s && /^languages=/ {next}
+{print}
+$0 == "[General]" && !done {print "languages=zh_CN"; done = 1}
+END {if (!done) printf "\n[General]\nlanguages=zh_CN\n"}
+' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+"""
+
 # 图形环境变量. 注意 .xprofile 只在 X11 会话下被 display manager source,
 # Wayland 会话完全不读它, 本仓库 sddm 组把默认会话设成 plasmax11 所以够用.
 #
@@ -310,8 +322,17 @@ def im():
 
 @deploy("WPS")
 def wps():
-    """WPS 国内版全家."""
+    """WPS 国内版全家, 界面语言设为中文."""
     aur.packages(WPS_AUR_PACKAGES)
+
+    # 界面语言默认跟系统 locale 走 (en_US 下就是英文), 中文要在
+    # ~/.config/Kingsoft/Office.conf 的 [General] 段写 languages=zh_CN.
+    # 这个文件 WPS 运行时会写入大量状态, 不能整体 put, 只改这一行:
+    # 删掉 [General] 里已有的 languages= 后在段首插入, 没有该段就追加
+    server.shell(
+        name="WPS 界面语言设为中文",
+        commands=[WPS_LANG_SCRIPT],
+    )
 
 
 @deploy("SDDM X11")

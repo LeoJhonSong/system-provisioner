@@ -56,7 +56,7 @@ just groups
 - `apps`: VSCode, Typora, Snipaste, simplescreenrecorder, vlc, handbrake, rar, plasma-x11-session
 - `browser`: Edge
 - `im`: 微信/飞书/腾讯会议
-- `wps`: WPS 国内版全家
+- `wps`: WPS 国内版全家, 界面语言设为中文
 - `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
 - `claude`: claude-code (官方脚本), cc-switch-cli (官方脚本), claude-history, 状态栏 (ccstatusline + git 信息)
 
