@@ -1,4 +1,8 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "effortLevel": "medium",
   "statusLine": {
     "type": "command",

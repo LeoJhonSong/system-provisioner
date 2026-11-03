@@ -403,7 +403,7 @@ def claude_tools():
         mode="644",
     )
 
-    # statusLine 与 effortLevel 不直接写 settings.json: 交给 cc-switch 的通用配置
+    # statusLine, effortLevel, attribution (commit/PR 不署名 Claude) 不直接写 settings.json: 交给 cc-switch 的通用配置
     # 片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
     files.put(
         name="放通用配置片段",
