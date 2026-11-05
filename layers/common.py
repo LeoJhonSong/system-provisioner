@@ -375,6 +375,13 @@ def claude_tools():
 
     aur.packages(["claude-history"])
 
+    # 完成/通知提示音 hooks 用 paplay (libpulse) 播 freedesktop 音效主题里的 .oga
+    pacman.packages(
+        name="装提示音依赖",
+        packages=["libpulse", "sound-theme-freedesktop"],
+        _sudo=True,
+    )
+
     cc_switch = f"{home}/.local/bin/cc-switch"
 
     # 状态栏由两个脚本拼成: statusline-command.sh 出 git 信息,
@@ -403,8 +410,8 @@ def claude_tools():
         mode="644",
     )
 
-    # statusLine, effortLevel, attribution (commit/PR 不署名 Claude) 不直接写 settings.json: 交给 cc-switch 的通用配置
-    # 片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
+    # statusLine, effortLevel, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音) 不直接写 settings.json:
+    # 交给 cc-switch 的通用配置片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
     files.put(
         name="放通用配置片段",
         src="files/common/claude/common-snippet.json",
