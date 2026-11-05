@@ -31,5 +31,7 @@
         ]
       }
     ]
-  }
+  },
+  "model": "opus",
+  "autoCompactEnabled": false
 }
