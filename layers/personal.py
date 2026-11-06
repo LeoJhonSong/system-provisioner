@@ -436,6 +436,16 @@ def disk_mount():
     )
 
 
+# lint 组: shell 与 GitHub Actions 的格式化/静态检查. jq/yq/ruff/just/uv 已在 common 层
+LINT_PACKAGES = ["shfmt", "shellcheck", "actionlint"]
+
+
+@deploy("lint")
+def lint():
+    """shfmt, shellcheck, actionlint."""
+    pacman.packages(name="装 lint 工具", packages=LINT_PACKAGES, _sudo=True)
+
+
 # 组名注册
 GROUPS = {
     "zsh": zsh_setup,
@@ -454,5 +464,6 @@ GROUPS = {
     "localbin": local_bin,
     "remote": remote,
     "robotics": robotics,
+    "lint": lint,
     "disk": disk_mount,
 }

@@ -77,6 +77,7 @@ just groups
 - `localbin`: `~/.local/bin` 自写脚本 (dde-file-manager 转 dolphin, snipaste-launcher), dev-browser (npm -g, 浏览器由 `files/personal/dev-browser-install.sh` 用 curl 预下载)
 - `remote`: anydesk, rustdesk, todesk, clash-verge-rev, openvpn3, frpc, NetworkManager VPN 插件 (openconnect/vpnc/openvpn/l2tp)
 - `robotics`: foxglove, python-rosbags
+- `lint`: shfmt, shellcheck, actionlint (shell 与 GitHub Actions 的格式化/静态检查)
 - `disk`: Windows 卷挂载
 
 未纳入部署、按需手装的包见 [OPTIONAL_PACKAGES.md](OPTIONAL_PACKAGES.md). 字体阿里巴巴普惠体, Operator Mono 无包, 是手动放进 `~/.local/share/fonts` 的, 不在仓库里.
