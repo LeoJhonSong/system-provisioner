@@ -27,7 +27,7 @@
 
 | 包 | 来源 | 用途 |
 |---|---|---|
-| tailscale | 官方 | 组网 VPN. `sudo systemctl enable --now tailscaled && sudo tailscale up`. 远程 SSH 走这个, 不要用 frp 暴露 22 |
+| tailscale | 官方 | 组网 VPN. `sudo systemctl enable --now tailscaled && sudo tailscale up`. frp 公网 SSH 的替代; 用 frp 时不暴露 22, 见 [docs/frp-ssh.md](docs/frp-ssh.md) |
 | remmina, freerdp | 官方 | RDP/VNC 客户端 |
 | sshfs | 官方 | 通过 SSH 挂载远程目录 |
 | nfs-utils | 官方 | NFS 客户端/服务端 |

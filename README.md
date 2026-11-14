@@ -75,7 +75,7 @@ just groups
 - `extras`: github-desktop, kooha, screenkey, 串口工具, samba, filezilla, appimagelauncher
 - `fonts`: FiraCode Nerd Font
 - `localbin`: `~/.local/bin` 自写脚本 (dde-file-manager 转 dolphin, snipaste-launcher), dev-browser (npm -g, 浏览器由 `files/personal/dev-browser-install.sh` 用 curl 预下载)
-- `remote`: anydesk, rustdesk, todesk, clash-verge-rev, openvpn3, frpc, NetworkManager VPN 插件 (openconnect/vpnc/openvpn/l2tp)
+- `remote`: anydesk, rustdesk, todesk, clash-verge-rev, openvpn3, frpc (只装不配, 公网 SSH 配置见 [docs/frp-ssh.md](docs/frp-ssh.md)), NetworkManager VPN 插件 (openconnect/vpnc/openvpn/l2tp)
 - `robotics`: foxglove, python-rosbags
 - `lint`: shfmt, shellcheck, actionlint (shell 与 GitHub Actions 的格式化/静态检查)
 - `disk`: Windows 卷挂载

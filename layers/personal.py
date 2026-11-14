@@ -117,8 +117,8 @@ REMOTE_PACKAGES = [
     "networkmanager-openvpn",
     "networkmanager-l2tp",
 ]
-# frpc 只装不配: 配置在 /etc/frp/frpc.toml, 需手写. 2026-10-06 本机经 frp
-# 映射到公网的 22 端口被 SSH 爆破入侵, 不要再映射 sshd, 远程登录走 tailscale
+# frpc 只装不配, 需手写. 公网 SSH 只转发仅认密钥的 127.0.0.1:2222, 不映射 22,
+# 方案见 docs/frp-ssh.md
 REMOTE_AUR_PACKAGES = [
     "anydesk-bin",
     "rustdesk-bin",
