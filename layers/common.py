@@ -428,6 +428,77 @@ def claude_tools():
     )
 
 
+# memory 组: zram 压缩 swap 的配置. zram 本身就是 swap 设备 (放在内存里, 压缩
+# 存储), zstd 下压缩比约 3:1, 半个内存大小的 zram 实际只占约 1/6 物理内存.
+# 不另开磁盘 swap: 机器不休眠到硬盘, 且 btrfs 上 swapfile 所在子卷不能快照,
+# 还挡部分 balance/resize; 内存真不够时靠 earlyoom 杀进程, 而不是换页到盘上卡死
+ZRAM_CONF = """[zram0]
+zram-size = ram / 2
+compression-algorithm = zstd
+swap-priority = 100
+"""
+
+# swappiness 默认 60 是按磁盘 swap 调的. 换到 zram 后换页只是内存里压缩/解压,
+# 比丢 page cache 后再读盘便宜, 内核文档建议此时设到 100 以上 (上限 200).
+# page-cluster=0: 每次只换入 1 页而不是预读 8 页, 预读是给磁盘寻道摊成本用的,
+# 对 zram 只是白解压
+SWAP_SYSCTL = """vm.swappiness = 150
+vm.page-cluster = 0
+"""
+
+
+@deploy("内存")
+def memory():
+    """zram 压缩 swap + earlyoom, 不开磁盘 swap.
+
+    起因: 20 核满并行编 libjxl 时内存打满, 无 swap 时内核 OOM killer 出手前
+    整机卡死. earlyoom 在可用内存与 swap 都低于 10% 时先杀最大进程.
+    """
+    pacman.packages(
+        name="装 zram-generator 与 earlyoom",
+        packages=["zram-generator", "earlyoom"],
+        _sudo=True,
+    )
+
+    zram = files.put(
+        name="放 zram-generator 配置",
+        src=StringIO(ZRAM_CONF),
+        dest="/etc/systemd/zram-generator.conf",
+        mode="644",
+        add_deploy_dir=False,
+        _sudo=True,
+    )
+
+    # zram 设备由 generator 在开机时生成 unit, 没有 enable 一说; 首次装好后
+    # daemon-reload 让 generator 跑一次, 再起服务就能马上用上, 不必重启.
+    # 配置改了也不 restart: 停服务要先 swapoff, 若 zram 里已换出几个 G 会很慢,
+    # 甚至因内存不够失败. 改动下次开机生效.
+    # did_change 是执行期才有结果的, 只能交给 _if, 不能当 daemon_reload= 的值
+    systemd.daemon_reload(name="重跑 zram generator", _if=zram.did_change, _sudo=True)
+    systemd.service(
+        name="启用 zram swap",
+        service="systemd-zram-setup@zram0.service",
+        running=True,
+        _sudo=True,
+    )
+
+    files.put(
+        name="放 swap 内核参数",
+        src=StringIO(SWAP_SYSCTL),
+        dest="/etc/sysctl.d/99-swap.conf",
+        mode="644",
+        add_deploy_dir=False,
+        _sudo=True,
+    )
+    server.shell(
+        name="应用 swap 内核参数",
+        commands=["sysctl -q -p /etc/sysctl.d/99-swap.conf"],
+        _sudo=True,
+    )
+
+    systemd.service(name="启 earlyoom", service="earlyoom", enabled=True, running=True, _sudo=True)
+
+
 # 组名注册. deploy.py 按 only/skip 过滤
 GROUPS = {
     "pacman": pacman_setup,
@@ -435,6 +506,7 @@ GROUPS = {
     "dev": dev,
     "input": input_method,
     "docker": docker_setup,
+    "memory": memory,
     "apps": apps,
     "browser": browser,
     "im": im,

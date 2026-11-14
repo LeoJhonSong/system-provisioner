@@ -53,6 +53,7 @@ just groups
 - `dev`: base-devel, gdb, cmake, nodejs/npm, jdk, uv (含 uvx), just, ruff, github-cli, pip/npm 镜像, npm 全局前缀改到 `~/.local` (免 sudo)
 - `input`: fcitx5 全套, xorg-xhost, `.xprofile`, 拼音输入法 + 左 Shift 切换
 - `docker`: docker + compose, 服务自启, 用户入组
+- `memory`: zram 压缩 swap (内存一半, zstd) + earlyoom, swappiness 调到 150; 不开磁盘 swap
 - `apps`: VSCode, Typora, Snipaste, simplescreenrecorder, vlc, handbrake, rar, plasma-x11-session
 - `browser`: Edge
 - `im`: 微信/飞书/腾讯会议
