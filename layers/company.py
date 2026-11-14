@@ -11,7 +11,6 @@ from pyinfra.api import deploy
 @deploy("占位")
 def placeholder():
     """空函数, 防止 GROUPS 为空字典."""
-    pass
 
 
 GROUPS = {

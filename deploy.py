@@ -92,7 +92,7 @@ def main():
     #
     # 反过来 (命令行给 --sudo, 代码里逐个标 _sudo=False) 需要在 23 处用户级
     # 操作上标注, 漏一处就把用户配置文件写成 root 所有.
-    for group_name, group_func in selected.items():
+    for group_func in selected.values():
         group_func(_env=proxy_env, _sudo=False)
 
 

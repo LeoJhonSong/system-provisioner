@@ -10,7 +10,6 @@ from io import StringIO
 import aur
 from pyinfra import host
 from pyinfra.api import deploy
-from pyinfra.facts.pacman import PacmanPackages
 from pyinfra.facts.server import Home
 from pyinfra.facts.server import User
 from pyinfra.operations import files
@@ -368,8 +367,10 @@ def claude_tools():
     server.shell(
         name="装 cc-switch-cli",
         commands=[
-            'test -x "$HOME/.local/bin/cc-switch" || '
-            "curl -fsSL https://github.com/SaladDay/cc-switch-cli/releases/latest/download/install.sh | bash"
+            (
+                'test -x "$HOME/.local/bin/cc-switch" || '
+                "curl -fsSL https://github.com/SaladDay/cc-switch-cli/releases/latest/download/install.sh | bash"
+            )
         ],
     )
 

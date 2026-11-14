@@ -205,7 +205,7 @@ def zsh_setup():
         return
     server.shell(
         name="备份原 .zshrc",
-        commands=[f'[ -f {zshrc} ] && cp -a {zshrc} {zshrc}.bak.$(date +%Y%m%d%H%M%S) || true'],
+        commands=[f"[ -f {zshrc} ] && cp -a {zshrc} {zshrc}.bak.$(date +%Y%m%d%H%M%S) || true"],
     )
     files.template(
         name="写 .zshrc 骨架",
@@ -391,8 +391,10 @@ def local_bin():
     server.shell(
         name="装 dev-browser 与浏览器",
         commands=[
-            f"ls {home}/.cache/ms-playwright/chromium_headless_shell-*/INSTALLATION_COMPLETE"
-            f' >/dev/null 2>&1 || bash "{repo}/files/personal/dev-browser-install.sh"'
+            (
+                f"ls {home}/.cache/ms-playwright/chromium_headless_shell-*/INSTALLATION_COMPLETE"
+                f' >/dev/null 2>&1 || bash "{repo}/files/personal/dev-browser-install.sh"'
+            )
         ],
     )
 

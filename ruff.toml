@@ -1,0 +1,11 @@
+# 固定仓库现有风格. 不写这份时用的是 ruff 默认值 (88 列, import 合并成一行),
+# 跟现有代码对不上, 每次升级 ruff 默认规则一变还会冒出新的告警
+line-length = 120
+
+[lint.isort]
+# 一行一个 import, diff 里增删一个名字只动一行
+force-single-line = true
+# 节内 import 与 from import 混排, 统一按模块名排
+force-sort-within-sections = true
+# 本仓库模块跟 pyinfra 放同一节, 只把标准库单独分出来
+known-third-party = ["aur", "yay", "layers"]
