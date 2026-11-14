@@ -410,7 +410,10 @@ def claude_tools():
         mode="644",
     )
 
-    # statusLine, effortLevel, model, autoCompactEnabled, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音)
+    # statusLine, effortLevel, model, autoCompactEnabled, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音),
+    # enabledPlugins + extraKnownMarketplaces (wip-list 插件市场),
+    # 项目专属的 autoMode 不放这里 (公开仓库, 且整份覆盖会冲掉), 放各项目自己的 .claude/settings.local.json,
+    # env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 (关自动更新/遥测/错误上报/bug 反馈: 走中转时这些直连官方的请求没必要, 国内还容易卡; 代价是要手动 claude update)
     # 不直接写 settings.json: 交给 cc-switch 的通用配置片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
     files.put(
         name="放通用配置片段",

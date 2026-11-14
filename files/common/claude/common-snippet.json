@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
   "attribution": {
     "commit": "",
     "pr": ""
@@ -33,5 +36,18 @@
     ]
   },
   "model": "opus",
-  "autoCompactEnabled": false
+  "autoCompactEnabled": false,
+  "enabledPlugins": {
+    "cc-plugin-you-should-know@builtin": true,
+    "wip-list@wip-list": true
+  },
+  "extraKnownMarketplaces": {
+    "wip-list": {
+      "source": {
+        "source": "github",
+        "repo": "LeoJhonSong/WIP-list"
+      },
+      "autoUpdate": true
+    }
+  }
 }
