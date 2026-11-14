@@ -10,7 +10,7 @@
 
 ## 前置条件
 
-- 控制端 (跑 pyinfra 的机器): 已装 `pyinfra` `just`
+- 控制端 (跑 pyinfra 的机器): 已装 `just`, pyinfra 用 `uv tool install pyinfra` 装. 不用 AUR 的 `pyinfra` 包: 3.11 起命令行依赖 cyclopts 与 rich, PKGBUILD 没声明, 官方源和 AUR 也都没有 `python-cyclopts`, 装完一跑就 `ModuleNotFoundError`
 - 目标机: Manjaro, SSH 可达 (公司机), 或就是控制端自己 (个人机)
 
 ## 用法
