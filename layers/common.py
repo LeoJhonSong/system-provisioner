@@ -349,14 +349,19 @@ def sddm_x11():
 
 SKILLS_REPO_URL = "https://github.com/LeoJhonSong/skills"
 
-# 把 argv[2] 的 JSON 深合并进 argv[1] (不存在则新建), 对象逐层合并, 其余类型整体替换.
+# 把 argv[2] 的 JSON 深合并进 argv[1] (不存在则新建), 对象逐层合并, 其余类型整体替换,
+# 值为 null 表示删掉该键.
 # 无变化时不写盘. 经 python3 -c 用单引号包着传给 shell, 所以代码里只用双引号
 MERGE_SETTINGS = """
 import json, sys
 def merge(base, extra):
     for key, value in extra.items():
-        both = isinstance(value, dict) and isinstance(base.get(key), dict)
-        base[key] = merge(base[key], value) if both else value
+        if value is None:
+            base.pop(key, None)
+        elif isinstance(value, dict):
+            base[key] = merge(base[key] if isinstance(base.get(key), dict) else {}, value)
+        else:
+            base[key] = value
     return base
 target, source = sys.argv[1:]
 try:
@@ -440,7 +445,9 @@ def claude_tools():
 
     # 全局设置: statusLine, effortLevel, autoCompactEnabled, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音),
     # enabledPlugins + extraKnownMarketplaces (wip-list 插件市场),
-    # env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 (关自动更新/遥测/错误上报/bug 反馈: 走中转时这些直连官方的请求没必要, 国内还容易卡; 代价是要手动 claude update).
+    # env.DISABLE_TELEMETRY=1 与 env.DISABLE_ERROR_REPORTING=1 (关遥测与错误上报: 走中转时这些直连官方的请求没必要, 国内还容易卡).
+    # 自动更新与 /bug 留着, 所以不用一并关掉四样的 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC; 文件里它的值是 null,
+    # 用来把以前部署写进去的那一项删掉.
     # 项目专属的 autoMode 不放这里 (公开仓库), 放各项目自己的 .claude/settings.local.json.
     # 不设 model: cc-switch 把它算作供应商字段, 切 provider 时会被替换或清掉.
     # 深合并进 settings.json 而不是整份覆盖: cc-switch 写的供应商字段 (env.ANTHROPIC_* 等) 和别处加的设置都留着,
