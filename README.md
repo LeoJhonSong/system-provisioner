@@ -52,10 +52,9 @@ just groups
 - `cli`: tmux, bat, yazi, fd, fzf, nmap, curl, wget, git-lfs, jq, yq, xclip
 - `dev`: base-devel, gdb, cmake, nodejs/npm, jdk, uv (含 uvx), just, ruff, github-cli, pip/npm 镜像, npm 全局前缀改到 `~/.local` (免 sudo)
 - `input`: fcitx5 全套, xorg-xhost, `.xprofile`, 拼音输入法 + 左 Shift 切换
-- `docker`: docker + compose, 服务自启, 用户入组; 根是 btrfs 时把 `/var/lib/docker` 与 `/var/lib/containerd` 迁到顶层子卷 `@docker` `@containerd` 并写 fstab, 不进 timeshift 快照 (docker 卷里的数据要另外备份). 首次迁移会停 docker. 目录已是挂载点、是软链或不存在 (数据已手动挪出系统盘, 如 .99 挪到 `/data`) 时跳过
+- `docker`: docker + compose, 服务自启, 用户入组
 - `memory`: zram 压缩 swap (内存一半, zstd) + earlyoom, swappiness 调到 150; 不开磁盘 swap
-- `btrfs`: 内核自带的 data 块组自动回收 (`dynamic_reclaim`, tmpfiles 开机写入), 每月 scrub; 根不是 btrfs 时跳过
-- `timeshift`: btrfs 模式, 每天一份留 2 份, 含 `/home`, 其余级别关且不留; 自己写 cron 文件并启 cronie; 根不是 btrfs 时跳过. 装包前快照 (timeshift-autosnap) 不归它管, 由 autosnap 自己留最近 3 份
+- `storage`: 让系统盘别爆, 根不是 btrfs 时整组跳过. 三件一起: (1) `/var/lib/docker` 与 `/var/lib/containerd` 迁到顶层子卷 `@docker` `@containerd` 并写 fstab, 不进 timeshift 快照 (docker 卷里的数据要另外备份); 迁移时停掉正在跑的 docker/containerd, 迁完再拉起; 目录已是挂载点、是软链或不存在 (数据已手动挪出系统盘, 如 .99 挪到 `/data`) 时跳过. (2) 内核自带的 data 块组自动回收 (`dynamic_reclaim`, tmpfiles 开机写入) + 每月 scrub. (3) timeshift btrfs 模式, 每天一份留 2 份, 含 `/home`, 其余级别关且不留; 自己写 cron 文件并启 cronie. 装包前快照 (timeshift-autosnap) 不归它管, 由 autosnap 自己留最近 3 份
 - `apps`: VSCode, Typora, Snipaste, simplescreenrecorder, vlc, handbrake, rar, plasma-x11-session
 - `browser`: Edge
 - `im`: 微信/飞书/腾讯会议

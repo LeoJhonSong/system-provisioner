@@ -284,89 +284,10 @@ def input_method():
         )
 
 
-# docker 数据目录 → 顶层子卷. timeshift 的 btrfs 模式只快照 @ 与 @home, 排除
-# 列表在 btrfs 模式下不生效, 想不进快照只能单独成子卷 (同 @cache @log).
-# 不进快照的理由: 删掉的镜像被快照引用着, 要等快照轮转掉才释放空间; 回滚系统
-# 时也不该把容器与镜像一起回滚. 代价: docker 卷里的数据 (数据库等) 也失去快照
-# 保护, 要另外备份.
-# 两个都要: 用 containerd 镜像存储 (docker 29 起默认) 时, 镜像层在系统
-# containerd.service 的 /var/lib/containerd, /var/lib/docker 只剩容器与卷.
-# 用顶层子卷 + fstab 挂载而不是嵌套子卷: timeshift 回滚会换掉整个 @, 嵌套在
-# @ 里的子卷不会跟到新 @ 里, 回滚后目录变空
-DOCKER_SUBVOLS = {
-    "/var/lib/docker": "@docker",
-    "/var/lib/containerd": "@containerd",
-}
-
-# 已是挂载点 (拆过子卷, 或手动挂到了别的盘) 就什么都不做. 不是目录或是软链
-# 也跳过: 说明 docker 数据已经被手动挪出系统盘 (如 .99 挪到 /data), 不能把
-# 别处的数据拷回系统盘. 包里不带这两个目录, 新机器要等 docker 首次启动建出
-# 来后, 下次部署才会迁. 否则: 停服务 → 挂顶层 (subvolid=5) 建子卷 →
-# cp --reflink 搬数据 (同盘只复制元数据, 秒完且不多占空间) → 写 fstab →
-# 原目录挪开换空目录挂上 → 删原目录.
-# 子卷建在父目录所在的 btrfs 上 (即根), fstab 挂载选项沿用该挂载点那行 (去掉
-# 其中的 subvol/subvolid), 与 @cache @log 一致.
-# 中断后重跑: 原目录在挂好之前一直保留 (挪开的叫 .pre-subvol, 重跑先挪回来),
-# 没挂上的半成品子卷删了重建, 所以不会丢数据
-SUBVOL_MIGRATE_SCRIPT = r"""set -eu
-P={path} S={subvol}
-old="$P.pre-subvol"
-if mountpoint -q "$P"; then rm -rf "$old"; exit 0; fi
-if [ -d "$old" ]; then rmdir "$P" 2>/dev/null || true; mv -T "$old" "$P"; fi
-if awk -v p="$P" '$1 !~ /^#/ && $2 == p {{f=1}} END {{exit !f}}' /etc/fstab; then
-    mkdir -p "$P"; systemctl daemon-reload; mount "$P"; exit 0
-fi
-if [ -L "$P" ] || [ ! -d "$P" ]; then
-    echo "$P 不是系统盘上的目录, docker 数据已不在系统盘, 跳过" >&2; exit 0
-fi
-systemctl stop docker.socket docker.service containerd.service
-parent=$(dirname "$P")
-src=$(findmnt -no SOURCE -T "$parent" | sed 's/\[.*//')
-uuid=$(findmnt -no UUID -T "$parent")
-mnt=$(findmnt -no TARGET -T "$parent")
-opts=$(awk -v m="$mnt" '$1 !~ /^#/ && $2 == m {{print $4}}' /etc/fstab | sed -E 's/(^|,)subvol(id)?=[^,]*//g; s/^,//')
-top=$(mktemp -d)
-# 中途失败时卸掉顶层挂载. 只在失败时有事可做, 每条都要 || true: trap 里
-# 也受 set -e 管, 正常路径上顶层已卸, umount 失败会把退出码改成 1
-trap 'umount "$top" 2>/dev/null || true; rmdir "$top" 2>/dev/null || true' EXIT
-mount -o subvolid=5 "$src" "$top"
-[ -e "$top/$S" ] && btrfs subvolume delete "$top/$S"
-btrfs subvolume create "$top/$S"
-cp -a --reflink=always "$P/." "$top/$S/"
-chmod --reference="$P" "$top/$S"
-umount "$top"
-echo "UUID=$uuid $P btrfs subvol=/$S${{opts:+,$opts}} 0 0" >> /etc/fstab
-[ -e "$P" ] && mv -T "$P" "$old"
-mkdir -p "$P"
-systemctl daemon-reload
-mount "$P"
-rm -rf "$old"
-"""
-
-
-def _root_is_btrfs(what: str) -> bool:
-    """根分区是不是 btrfs. 不是就打 warning 说明跳过了什么."""
-    root = host.get_fact(Mounts).get("/")
-    if root and root["type"] == "btrfs":
-        return True
-    logger.warning(f"{host.name}: 根分区不是 btrfs, 跳过{what}")
-    return False
-
-
 @deploy("Docker")
 def docker_setup():
     """Docker 与 compose, 服务自启, 用户入 docker 组."""
     pacman.packages(name="装 docker", packages=["docker", "docker-compose"], _sudo=True)
-
-    # 数据目录迁到独立子卷, 不进 timeshift 快照. 必须在启服务之前: 脚本会停
-    # docker 与 containerd, 由下面的 systemd.service 重新拉起
-    if _root_is_btrfs("docker 数据目录迁子卷"):
-        for path, subvol in DOCKER_SUBVOLS.items():
-            server.shell(
-                name=f"{path} 迁到子卷 {subvol}",
-                commands=[SUBVOL_MIGRATE_SCRIPT.format(path=path, subvol=subvol)],
-                _sudo=True,
-            )
 
     systemd.service(name="启 docker 服务", service="docker", enabled=True, running=True, _sudo=True)
 
@@ -581,47 +502,82 @@ def memory():
     systemd.service(name="启 earlyoom", service="earlyoom", enabled=True, running=True, _sudo=True)
 
 
+# docker 数据目录 → 顶层子卷. timeshift 的 btrfs 模式只快照 @ 与 @home, 排除
+# 列表在 btrfs 模式下不生效, 想不进快照只能单独成子卷 (同 @cache @log).
+# 不进快照的理由: 删掉的镜像被快照引用着, 要等快照轮转掉才释放空间; 回滚系统
+# 时也不该把容器与镜像一起回滚. 代价: docker 卷里的数据 (数据库等) 也失去快照
+# 保护, 要另外备份.
+# 两个都要: 用 containerd 镜像存储 (docker 29 起默认) 时, 镜像层在系统
+# containerd.service 的 /var/lib/containerd, /var/lib/docker 只剩容器与卷.
+# 用顶层子卷 + fstab 挂载而不是嵌套子卷: timeshift 回滚会换掉整个 @, 嵌套在
+# @ 里的子卷不会跟到新 @ 里, 回滚后目录变空
+DOCKER_SUBVOLS = {
+    "/var/lib/docker": "@docker",
+    "/var/lib/containerd": "@containerd",
+}
+
+# 已是挂载点 (拆过子卷, 或手动挂到了别的盘) 就什么都不做. 不是目录或是软链
+# 也跳过: 说明 docker 数据已经被手动挪出系统盘 (如 .99 挪到 /data), 不能把
+# 别处的数据拷回系统盘. 包里不带这两个目录, 新机器要等 docker 首次启动建出
+# 来后, 下次部署才会迁. 否则: 停掉正在跑的 docker/containerd → 挂顶层 (subvolid=5) 建子卷 →
+# cp --reflink 搬数据 (同盘只复制元数据, 秒完且不多占空间) → 写 fstab →
+# 原目录挪开换空目录挂上 → 删原目录 → 把停掉的服务再拉起来 (原来没跑的不拉).
+# 子卷建在父目录所在的 btrfs 上 (即根), fstab 挂载选项沿用该挂载点那行 (去掉
+# 其中的 subvol/subvolid), 与 @cache @log 一致.
+# 中断后重跑: 原目录在挂好之前一直保留 (挪开的叫 .pre-subvol, 重跑先挪回来),
+# 没挂上的半成品子卷删了重建, 所以不会丢数据
+SUBVOL_MIGRATE_SCRIPT = r"""set -eu
+P={path} S={subvol}
+old="$P.pre-subvol"
+if mountpoint -q "$P"; then rm -rf "$old"; exit 0; fi
+if [ -d "$old" ]; then rmdir "$P" 2>/dev/null || true; mv -T "$old" "$P"; fi
+if awk -v p="$P" '$1 !~ /^#/ && $2 == p {{f=1}} END {{exit !f}}' /etc/fstab; then
+    mkdir -p "$P"; systemctl daemon-reload; mount "$P"; exit 0
+fi
+if [ -L "$P" ] || [ ! -d "$P" ]; then
+    echo "$P 不是系统盘上的目录, docker 数据已不在系统盘, 跳过" >&2; exit 0
+fi
+units=$(systemctl list-units --state=active --plain --no-legend docker.socket docker.service containerd.service | awk '{{print $1}}')
+[ -z "$units" ] || systemctl stop $units
+parent=$(dirname "$P")
+src=$(findmnt -no SOURCE -T "$parent" | sed 's/\[.*//')
+uuid=$(findmnt -no UUID -T "$parent")
+mnt=$(findmnt -no TARGET -T "$parent")
+opts=$(awk -v m="$mnt" '$1 !~ /^#/ && $2 == m {{print $4}}' /etc/fstab | sed -E 's/(^|,)subvol(id)?=[^,]*//g; s/^,//')
+top=$(mktemp -d)
+# 中途失败时卸掉顶层挂载. 只在失败时有事可做, 每条都要 || true: trap 里
+# 也受 set -e 管, 正常路径上顶层已卸, umount 失败会把退出码改成 1
+trap 'umount "$top" 2>/dev/null || true; rmdir "$top" 2>/dev/null || true' EXIT
+mount -o subvolid=5 "$src" "$top"
+[ -e "$top/$S" ] && btrfs subvolume delete "$top/$S"
+btrfs subvolume create "$top/$S"
+cp -a --reflink=always "$P/." "$top/$S/"
+chmod --reference="$P" "$top/$S"
+umount "$top"
+echo "UUID=$uuid $P btrfs subvol=/$S${{opts:+,$opts}} 0 0" >> /etc/fstab
+[ -e "$P" ] && mv -T "$P" "$old"
+mkdir -p "$P"
+systemctl daemon-reload
+mount "$P"
+rm -rf "$old"
+[ -z "$units" ] || systemctl start $units
+"""
+
+
+def _root_is_btrfs(what: str) -> bool:
+    """根分区是不是 btrfs. 不是就打 warning 说明跳过了什么."""
+    root = host.get_fact(Mounts).get("/")
+    if root and root["type"] == "btrfs":
+        return True
+    logger.warning(f"{host.name}: 根分区不是 btrfs, 跳过{what}")
+    return False
+
+
 # 内核 6.11 起自带的 btrfs 自动回收: data 块组用得够空时由内核自己 relocate
 # 回收, 盘越满越积极. 默认关. 用 tmpfiles 在每次开机时写 sysfs, glob 匹配所有
 # 已挂载的 btrfs, 免得按 UUID 一台台写. 内核太老没有这个文件时 glob 匹配不到,
 # 静默跳过
 BTRFS_RECLAIM_TMPFILES = "w /sys/fs/btrfs/*/allocation/data/dynamic_reclaim - - - - 1\n"
-
-
-@deploy("btrfs 维护")
-def btrfs():
-    """开内核自带的 data 块组自动回收, 开每月一次的 scrub.
-
-    起因: data 块组分配满了但里面很空 (删快照后常见), 块组分不出来, 报
-    盘满. 不装 btrfsmaintenance: 它定时全盘跑 balance, IO 比内核按需回收重.
-    """
-    if not _root_is_btrfs("btrfs 维护"):
-        return
-
-    reclaim = files.put(
-        name="放 btrfs 自动回收 tmpfiles",
-        src=StringIO(BTRFS_RECLAIM_TMPFILES),
-        dest="/etc/tmpfiles.d/btrfs-reclaim.conf",
-        mode="644",
-        add_deploy_dir=False,
-        _sudo=True,
-    )
-    server.shell(
-        name="立即开启 btrfs 自动回收",
-        commands=["systemd-tmpfiles --create /etc/tmpfiles.d/btrfs-reclaim.conf"],
-        _if=reclaim.did_change,
-        _sudo=True,
-    )
-
-    # scrub 校验数据块校验和, 查静默损坏, 与空间无关. `-` 是 / 的 systemd 转义,
-    # / 与 /home 在同一个 btrfs 上, 一个就够
-    systemd.service(
-        name="开每月 btrfs scrub",
-        service="btrfs-scrub@-.timer",
-        enabled=True,
-        running=True,
-        _sudo=True,
-    )
 
 
 # timeshift 要的配置项. 值一律是字符串, timeshift 自己就这么存.
@@ -679,11 +635,51 @@ MAILTO=""
 """
 
 
-@deploy("timeshift")
-def timeshift():
-    """timeshift btrfs 模式, 每天一份留 2 份, 含 /home, 其余级别不留."""
-    if not _root_is_btrfs("timeshift"):
+@deploy("存储")
+def storage():
+    """让系统盘别爆: docker 数据迁独立子卷, btrfs 自动回收与 scrub, timeshift 只留 2 份.
+
+    三件是一套: timeshift 快照会钉住 @ 里删掉的数据 (所以 docker 要挪出 @, 快照
+    要少留), 数据删了之后 data 块组又要靠内核回收才能还给新分配.
+
+    起因: data 块组分配满了但里面很空 (删快照后常见), 块组分不出来, 报盘满.
+    不装 btrfsmaintenance: 它定时全盘跑 balance, IO 比内核按需回收重.
+    """
+    if not _root_is_btrfs("存储组"):
         return
+
+    # 先迁 docker, 再配 timeshift: 迁完之后的快照就不再带 docker 数据了
+    for path, subvol in DOCKER_SUBVOLS.items():
+        server.shell(
+            name=f"{path} 迁到子卷 {subvol}",
+            commands=[SUBVOL_MIGRATE_SCRIPT.format(path=path, subvol=subvol)],
+            _sudo=True,
+        )
+
+    reclaim = files.put(
+        name="放 btrfs 自动回收 tmpfiles",
+        src=StringIO(BTRFS_RECLAIM_TMPFILES),
+        dest="/etc/tmpfiles.d/btrfs-reclaim.conf",
+        mode="644",
+        add_deploy_dir=False,
+        _sudo=True,
+    )
+    server.shell(
+        name="立即开启 btrfs 自动回收",
+        commands=["systemd-tmpfiles --create /etc/tmpfiles.d/btrfs-reclaim.conf"],
+        _if=reclaim.did_change,
+        _sudo=True,
+    )
+
+    # scrub 校验数据块校验和, 查静默损坏, 与空间无关. `-` 是 / 的 systemd 转义,
+    # / 与 /home 在同一个 btrfs 上, 一个就够
+    systemd.service(
+        name="开每月 btrfs scrub",
+        service="btrfs-scrub@-.timer",
+        enabled=True,
+        running=True,
+        _sudo=True,
+    )
 
     # cronie 驱动上面的 cron 文件; jq 改 json
     pacman.packages(name="装 timeshift", packages=["timeshift", "cronie", "jq"], _sudo=True)
@@ -716,8 +712,7 @@ GROUPS = {
     "input": input_method,
     "docker": docker_setup,
     "memory": memory,
-    "btrfs": btrfs,
-    "timeshift": timeshift,
+    "storage": storage,
     "apps": apps,
     "browser": browser,
     "im": im,
