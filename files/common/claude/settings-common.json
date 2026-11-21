@@ -35,7 +35,6 @@
       }
     ]
   },
-  "model": "opus",
   "autoCompactEnabled": false,
   "enabledPlugins": {
     "cc-plugin-you-should-know@builtin": true,

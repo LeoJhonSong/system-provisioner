@@ -349,6 +349,25 @@ def sddm_x11():
 
 SKILLS_REPO_URL = "https://github.com/LeoJhonSong/skills"
 
+# 把 argv[2] 的 JSON 深合并进 argv[1] (不存在则新建), 对象逐层合并, 其余类型整体替换.
+# 无变化时不写盘. 经 python3 -c 用单引号包着传给 shell, 所以代码里只用双引号
+MERGE_SETTINGS = """
+import json, sys
+def merge(base, extra):
+    for key, value in extra.items():
+        both = isinstance(value, dict) and isinstance(base.get(key), dict)
+        base[key] = merge(base[key], value) if both else value
+    return base
+target, source = sys.argv[1:]
+try:
+    current = json.load(open(target))
+except FileNotFoundError:
+    current = {}
+merged = merge(json.loads(json.dumps(current)), json.load(open(source)))
+if merged != current:
+    json.dump(merged, open(target, "w"), indent=2, ensure_ascii=False)
+"""
+
 
 @deploy("Claude 工具")
 def claude_tools():
@@ -393,8 +412,6 @@ def claude_tools():
 
     aur.packages(["claude-history"])
 
-    cc_switch = f"{home}/.local/bin/cc-switch"
-
     # 状态栏由两个脚本拼成: statusline-command.sh 出 git 信息,
     # statusline-wrapper.sh 把同一份 stdin JSON 再喂给 ccstatusline 取上下文占比
     # npm -g 前缀由 dev 组改成了 ~/.local, 所以免 sudo 且判存走绝对路径
@@ -421,20 +438,22 @@ def claude_tools():
         mode="644",
     )
 
-    # statusLine, effortLevel, model, autoCompactEnabled, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音),
+    # 全局设置: statusLine, effortLevel, autoCompactEnabled, attribution (commit/PR 不署名 Claude), hooks (完成/通知提示音),
     # enabledPlugins + extraKnownMarketplaces (wip-list 插件市场),
-    # 项目专属的 autoMode 不放这里 (公开仓库, 且整份覆盖会冲掉), 放各项目自己的 .claude/settings.local.json,
-    # env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 (关自动更新/遥测/错误上报/bug 反馈: 走中转时这些直连官方的请求没必要, 国内还容易卡; 代价是要手动 claude update)
-    # 不直接写 settings.json: 交给 cc-switch 的通用配置片段, 切 provider 重写 settings.json 时片段会被重新合并进去, 不会丢
+    # env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 (关自动更新/遥测/错误上报/bug 反馈: 走中转时这些直连官方的请求没必要, 国内还容易卡; 代价是要手动 claude update).
+    # 项目专属的 autoMode 不放这里 (公开仓库), 放各项目自己的 .claude/settings.local.json.
+    # 不设 model: cc-switch 把它算作供应商字段, 切 provider 时会被替换或清掉.
+    # 深合并进 settings.json 而不是整份覆盖: cc-switch 写的供应商字段 (env.ANTHROPIC_* 等) 和别处加的设置都留着,
+    # 同名键以本仓库为准. cc-switch v5.11.1 起切 provider 只动供应商字段, 所以合并进去的设置不会丢
     files.put(
-        name="放通用配置片段",
-        src="files/common/claude/common-snippet.json",
-        dest=f"{home}/.cc-switch/common-snippet.json",
+        name="放全局设置",
+        src="files/common/claude/settings-common.json",
+        dest=f"{home}/.claude/settings-common.json",
         mode="644",
     )
     server.shell(
-        name="注入通用配置片段",
-        commands=[f"{cc_switch} config common set -a claude --file {home}/.cc-switch/common-snippet.json"],
+        name="全局设置合并进 settings.json",
+        commands=[f"python3 -c '{MERGE_SETTINGS}' {home}/.claude/settings.json {home}/.claude/settings-common.json"],
     )
 
 
