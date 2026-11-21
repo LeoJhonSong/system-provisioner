@@ -39,6 +39,6 @@ check:
 
 # 列出所有组
 groups:
-    @echo "common: pacman cli dev input docker apps browser im wps sddm claude"
+    @echo "common: pacman cli dev input docker memory btrfs timeshift apps browser im wps sddm claude"
     @echo "personal: zsh git python wakatime clang aria2 kvantum graphics media latex office extras fonts localbin remote robotics disk"
     @echo "company: placeholder"
