@@ -347,15 +347,35 @@ def sddm_x11():
     )
 
 
+SKILLS_REPO_URL = "https://github.com/LeoJhonSong/skills"
+
+
 @deploy("Claude 工具")
 def claude_tools():
-    """claude-code, cc-switch-cli, claude-history."""
+    """claude-code, cc-switch-cli, claude-history, 状态栏, 通用技能."""
     home = host.get_fact(Home)
 
     # claude-code AUR 无官方包, 用官方脚本
     server.shell(
         name="装 claude-code",
         commands=["command -v claude || curl -fsSL https://claude.ai/install.sh | bash"],
+    )
+
+    # 各项目通用的技能放一个仓库, 直接检出在 ~/.claude/skills, 更新在该目录 git pull.
+    # 不用 git.repo: 目录里已有别处写进来的技能 (桌面应用同步的 synced/, dev-browser
+    # 自装的), git clone 不接受非空目录, 所以就地 init 再检出; 那些目录由仓库的
+    # .gitignore 忽略. 已是仓库则不动, 不替用户 pull
+    skills_dir = f"{home}/.claude/skills"
+    server.shell(
+        name="检出通用技能到 ~/.claude/skills",
+        commands=[
+            (
+                f'test -d "{skills_dir}/.git" || {{ '
+                f'mkdir -p "{skills_dir}" && cd "{skills_dir}" && '
+                f"git init -q -b main && git remote add origin {SKILLS_REPO_URL} && "
+                "git fetch -q origin main && git checkout -q -t origin/main; }"
+            )
+        ],
     )
 
     # cc-switch-cli 用官方脚本装预编译二进制 (装到 ~/.local/bin/cc-switch).
@@ -372,13 +392,6 @@ def claude_tools():
     )
 
     aur.packages(["claude-history"])
-
-    # 完成/通知提示音 hooks 用 paplay (libpulse) 播 freedesktop 音效主题里的 .oga
-    pacman.packages(
-        name="装提示音依赖",
-        packages=["libpulse", "sound-theme-freedesktop"],
-        _sudo=True,
-    )
 
     cc_switch = f"{home}/.local/bin/cc-switch"
 

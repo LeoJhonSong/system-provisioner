@@ -58,7 +58,7 @@ just groups
 - `browser`: Edge. 单独成组以便最先装, 部署没跑完就能先登录账号
 - `apps`: 微信/飞书/腾讯会议, WPS 国内版全家 (界面语言设为中文), VSCode, Typora, Snipaste, simplescreenrecorder, ventoy, vlc, handbrake, gparted, 7zip, rar, plasma-x11-session
 - `sddm`: SDDM 默认 X11 session (很多软件需要 X11)
-- `claude`: claude-code (官方脚本), cc-switch-cli (官方脚本), claude-history, 状态栏 (ccstatusline + git 信息)
+- `claude`: claude-code (官方脚本), cc-switch-cli (官方脚本), claude-history, 状态栏 (ccstatusline + git 信息), 通用技能 ([skills](https://github.com/LeoJhonSong/skills) 直接检出在 `~/.claude/skills`, 更新在该目录 `git pull`)
 
 ### personal 层
 - `zsh`: oh-my-zsh, pkgfile, Shell-Scripts, 部署仓库 clone 到 `~/projects`, `.zshrc` 骨架 (非本仓库所写的先备份再重写)
