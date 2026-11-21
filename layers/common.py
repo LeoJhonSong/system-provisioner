@@ -84,7 +84,7 @@ APP_PACKAGES = [
     "handbrake",
 ]
 
-# 桌面应用, AUR 部分 (浏览器, 即时通讯, WPS 各自成组, 见下)
+# 桌面应用, AUR 部分 (浏览器单独成组, 见下)
 APP_AUR_PACKAGES = [
     "visual-studio-code-bin",
     "typora-free",
@@ -97,10 +97,10 @@ APP_AUR_PACKAGES = [
 # browser 组. 单独成组以便最先装: 部署没跑完就能先登录各种账号, 自己搜索下载
 BROWSER_AUR_PACKAGES = ["microsoft-edge-stable-bin"]
 
-# im 组: 即时通讯与会议
+# 即时通讯与会议 (apps 组)
 IM_AUR_PACKAGES = ["wechat-bin", "feishu-bin", "wemeet-bin"]
 
-# wps 组: 国内版本体 + 中文语言包 + 字体符号 + mime types
+# WPS (apps 组): 国内版本体 + 中文语言包 + 字体符号 + mime types
 WPS_AUR_PACKAGES = [
     "wps-office-cn",
     "wps-office-mui-zh-cn",
@@ -303,31 +303,22 @@ def docker_setup():
     )
 
 
-@deploy("桌面应用")
-def apps():
-    """GUI 应用: VSCode, Typora, Snipaste, 录屏, 播放器."""
-    pacman.packages(name="装桌面应用 (官方源)", packages=APP_PACKAGES, _sudo=True)
-    aur.packages(APP_AUR_PACKAGES)
-
-
 @deploy("浏览器")
 def browser():
     """Edge."""
     aur.packages(BROWSER_AUR_PACKAGES)
 
 
-@deploy("即时通讯")
-def im():
-    """微信, 飞书, 腾讯会议."""
+@deploy("桌面应用")
+def apps():
+    """即时通讯 (微信, 飞书, 腾讯会议), WPS, VSCode, Typora, Snipaste, 录屏, 播放器.
+
+    即时通讯与 WPS 排在前面: 部署没跑完时它们最先能用上.
+    """
     aur.packages(IM_AUR_PACKAGES)
-
-
-@deploy("WPS")
-def wps():
-    """WPS 国内版全家, 界面语言设为中文."""
     aur.packages(WPS_AUR_PACKAGES)
 
-    # 界面语言默认跟系统 locale 走 (en_US 下就是英文), 中文要在
+    # WPS 界面语言默认跟系统 locale 走 (en_US 下就是英文), 中文要在
     # ~/.config/Kingsoft/Office.conf 的 [General] 段写 languages=zh_CN.
     # 这个文件 WPS 运行时会写入大量状态, 不能整体 put, 只改这一行:
     # 删掉 [General] 里已有的 languages= 后在段首插入, 没有该段就追加
@@ -335,6 +326,9 @@ def wps():
         name="WPS 界面语言设为中文",
         commands=[WPS_LANG_SCRIPT],
     )
+
+    pacman.packages(name="装桌面应用 (官方源)", packages=APP_PACKAGES, _sudo=True)
+    aur.packages(APP_AUR_PACKAGES)
 
 
 @deploy("SDDM X11")
@@ -713,10 +707,8 @@ GROUPS = {
     "docker": docker_setup,
     "memory": memory,
     "storage": storage,
-    "apps": apps,
     "browser": browser,
-    "im": im,
-    "wps": wps,
+    "apps": apps,
     "sddm": sddm_x11,
     "claude": claude_tools,
 }

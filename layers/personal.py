@@ -39,7 +39,9 @@ def _clone_repo(home: str) -> str:
     return f"{home}/{REPO_DIR}"
 
 
-# graphics 组
+# 以下为 software 组的各类软件
+
+# 图形
 GRAPHICS_PACKAGES = [
     "drawio-desktop",
     "gimp",
@@ -50,7 +52,7 @@ GRAPHICS_PACKAGES = [
     "ghostscript",
 ]
 
-# media 组. vlc / handbrake 已提到 common 层
+# 媒体. vlc / handbrake 在 common 层 apps 组
 MEDIA_PACKAGES = ["kdenlive", "wine", "winetricks"]
 MEDIA_AUR_PACKAGES = [
     # davinci-resolve-studio: 故意不装. 这个 PKGBUILD 不下载安装包, 要自己去
@@ -59,7 +61,7 @@ MEDIA_AUR_PACKAGES = [
     "audiorelay",
 ]
 
-# latex 组
+# latex 组 (体量大, 单独成组方便跳过)
 LATEX_PACKAGES = [
     "texlive-basic",
     "texlive-lang",
@@ -76,7 +78,7 @@ LATEX_PACKAGES = [
     "python-pygments",
 ]
 
-# office 组
+# 办公
 OFFICE_AUR_PACKAGES = [
     "linuxqq",
     "zotero-beta-bin",
@@ -85,7 +87,7 @@ OFFICE_AUR_PACKAGES = [
     "onedrivegui-git",
 ]
 
-# extras 组
+# 杂项
 EXTRAS_PACKAGES = [
     "kooha",
     "screenkey",
@@ -101,7 +103,7 @@ EXTRAS_AUR_PACKAGES = [
     "appimagelauncher",
 ]
 
-# fonts 组. 阿里巴巴普惠体, Operator Mono 无包, 手动放 ~/.local/share/fonts
+# 字体. 阿里巴巴普惠体, Operator Mono 无包, 手动放 ~/.local/share/fonts
 FONT_PACKAGES = ["ttf-firacode-nerd"]
 
 # localbin 组: 放进 ~/.local/bin 的自写小脚本 (files/personal/bin/)
@@ -110,7 +112,7 @@ LOCAL_BIN_SCRIPTS = [
     "snipaste-launcher",
 ]
 
-# remote 组: 远程桌面, 代理, VPN, 内网穿透
+# 远程与网络: 远程桌面, 代理, VPN, 内网穿透
 REMOTE_PACKAGES = [
     "networkmanager-openconnect",
     "networkmanager-vpnc",
@@ -128,7 +130,7 @@ REMOTE_AUR_PACKAGES = [
     "frpc-bin",
 ]
 
-# robotics 组
+# 机器人
 ROBOTICS_AUR_PACKAGES = [
     "foxglove-bin",
     "python-rosbags",
@@ -224,27 +226,31 @@ def git_setup():
     git.config(name="配 git credential.helper", key="credential.helper", value="store")
 
 
-@deploy("python")
-def python_setup():
-    """pyenv, pyenv-virtualenv 与 .pythonrc.py."""
+# devtools 组: shell 与 GitHub Actions 的格式化/静态检查. jq/yq/ruff/just/uv 已在 common 层
+LINT_PACKAGES = ["shfmt", "shellcheck", "actionlint"]
+
+
+@deploy("开发工具")
+def devtools():
+    """pyenv (+ .pythonrc.py), clang/bear (+ .clang-format), lint 工具, wakatime."""
     home = host.get_fact(Home)
 
     # tk 是 pyenv 编译 Python 时 tkinter 模块的构建依赖, 没有它编出来的
     # Python 缺 _tkinter
-    pacman.packages(name="装 pyenv", packages=["pyenv", "tk"], _sudo=True)
-    aur.packages(["pyenv-virtualenv"])
-    files.put(
-        name="放 .pythonrc.py",
-        src="files/personal/.pythonrc.py",
-        dest=f"{home}/.pythonrc.py",
-        mode="644",
+    pacman.packages(
+        name="装 pyenv, clang, lint 工具",
+        packages=["pyenv", "tk", "clang", "bear", *LINT_PACKAGES],
+        _sudo=True,
     )
+    aur.packages(["pyenv-virtualenv"])
 
-
-@deploy("wakatime")
-def wakatime_setup():
-    """wakatime-cli 与 .wakatime.cfg."""
-    home = host.get_fact(Home)
+    for filename in (".pythonrc.py", ".clang-format"):
+        files.put(
+            name=f"放 {filename}",
+            src=f"files/personal/{filename}",
+            dest=f"{home}/{filename}",
+            mode="644",
+        )
 
     server.shell(
         name="装 wakatime-cli",
@@ -257,33 +263,6 @@ def wakatime_setup():
         src="files/personal/.wakatime.cfg",
         dest=f"{home}/.wakatime.cfg",
         mode="600",
-    )
-
-
-@deploy("clang")
-def clang_setup():
-    """clang 工具链与 .clang-format."""
-    home = host.get_fact(Home)
-
-    pacman.packages(name="装 clang/bear", packages=["clang", "bear"], _sudo=True)
-    files.put(
-        name="放 .clang-format",
-        src="files/personal/.clang-format",
-        dest=f"{home}/.clang-format",
-        mode="644",
-    )
-
-
-@deploy("aria2")
-def aria2_setup():
-    """aria2 配置与自启."""
-    home = host.get_fact(Home)
-
-    repo = _clone_repo(home)
-    files.link(
-        name="软链 aria2.conf",
-        path=f"{home}/.config/aria2/aria2.conf",
-        target=f"{repo}/files/personal/aria2.conf",
     )
 
 
@@ -319,32 +298,22 @@ def kvantum_setup():
     )
 
 
-@deploy("图形软件")
-def graphics():
-    """绘图与图形处理软件."""
-    pacman.packages(name="装图形软件", packages=GRAPHICS_PACKAGES, _sudo=True)
-
-
-@deploy("媒体软件")
-def media():
-    """视频编辑与音频播放器."""
-    pacman.packages(name="装媒体软件 (官方源)", packages=MEDIA_PACKAGES, _sudo=True)
-    aur.packages(MEDIA_AUR_PACKAGES)
-
-
 @deploy("LaTeX")
 def latex_setup():
     """texlive 全套与依赖."""
     pacman.packages(name="装 texlive", packages=LATEX_PACKAGES, _sudo=True)
 
 
-@deploy("办公软件")
-def office():
-    """zotero, onedrive, linuxqq, zoom."""
+@deploy("个人软件")
+def software():
+    """办公, 图形, 媒体, 远程与网络, 机器人, 杂项, 字体.
+
+    办公排最前: zotero / onedrive / QQ 部署没跑完时最先能用上.
+    官方源的合成一次 pacman 装, AUR 的按类分开调, 失败时日志里好认是哪类.
+    """
     home = host.get_fact(Home)
 
     aur.packages(OFFICE_AUR_PACKAGES)
-
     # OneDriveGUI 自启
     # 不用 files.put: 它的 src 读的是控制端的文件, 而 .desktop 由上面的
     # AUR 包装到目标机, 只能在目标机上拷
@@ -355,18 +324,23 @@ def office():
         ],
     )
 
-
-@deploy("杂项工具")
-def extras():
-    """录屏, 串口, samba, filezilla, github-desktop 等."""
-    pacman.packages(name="装杂项工具 (官方源)", packages=EXTRAS_PACKAGES, _sudo=True)
+    pacman.packages(
+        name="装个人软件 (官方源)",
+        packages=GRAPHICS_PACKAGES + MEDIA_PACKAGES + REMOTE_PACKAGES + EXTRAS_PACKAGES + FONT_PACKAGES,
+        _sudo=True,
+    )
+    aur.packages(MEDIA_AUR_PACKAGES)
+    aur.packages(REMOTE_AUR_PACKAGES)
+    aur.packages(ROBOTICS_AUR_PACKAGES)
     aur.packages(EXTRAS_AUR_PACKAGES)
 
-
-@deploy("字体")
-def fonts():
-    """FiraCode Nerd Font."""
-    pacman.packages(name="装字体", packages=FONT_PACKAGES, _sudo=True)
+    # aria2 包在 EXTRAS_PACKAGES 里, 配置软链到仓库
+    repo = _clone_repo(home)
+    files.link(
+        name="软链 aria2.conf",
+        path=f"{home}/.config/aria2/aria2.conf",
+        target=f"{repo}/files/personal/aria2.conf",
+    )
 
 
 @deploy("~/.local/bin")
@@ -399,19 +373,6 @@ def local_bin():
     )
 
 
-@deploy("远程与网络")
-def remote():
-    """远程桌面 (anydesk, rustdesk, todesk), clash, VPN 插件, frpc."""
-    pacman.packages(name="装 VPN 插件 (官方源)", packages=REMOTE_PACKAGES, _sudo=True)
-    aur.packages(REMOTE_AUR_PACKAGES)
-
-
-@deploy("机器人工具")
-def robotics():
-    """foxglove 与 rosbag 读写库."""
-    aur.packages(ROBOTICS_AUR_PACKAGES)
-
-
 @deploy("Windows 卷挂载")
 def disk_mount():
     """挂载 Windows 卷 (仅个人机有)."""
@@ -438,34 +399,14 @@ def disk_mount():
     )
 
 
-# lint 组: shell 与 GitHub Actions 的格式化/静态检查. jq/yq/ruff/just/uv 已在 common 层
-LINT_PACKAGES = ["shfmt", "shellcheck", "actionlint"]
-
-
-@deploy("lint")
-def lint():
-    """shfmt, shellcheck, actionlint."""
-    pacman.packages(name="装 lint 工具", packages=LINT_PACKAGES, _sudo=True)
-
-
 # 组名注册
 GROUPS = {
     "zsh": zsh_setup,
     "git": git_setup,
-    "python": python_setup,
-    "wakatime": wakatime_setup,
-    "clang": clang_setup,
-    "aria2": aria2_setup,
+    "devtools": devtools,
     "kvantum": kvantum_setup,
-    "graphics": graphics,
-    "media": media,
     "latex": latex_setup,
-    "office": office,
-    "extras": extras,
-    "fonts": fonts,
+    "software": software,
     "localbin": local_bin,
-    "remote": remote,
-    "robotics": robotics,
-    "lint": lint,
     "disk": disk_mount,
 }

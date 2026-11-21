@@ -37,8 +37,8 @@ _deploy +args:
 check:
     pyinfra @docker/manjarolinux/base deploy.py --data profile=personal --dry
 
-# 列出所有组
+# 列出所有组. 直接从各层 GROUPS 的键读 (只解析语法树, 不 import, 不需要 pyinfra),
+# 免得手写清单与代码对不上
 groups:
-    @echo "common: pacman cli dev input docker memory storage apps browser im wps sddm claude"
-    @echo "personal: zsh git python wakatime clang aria2 kvantum graphics media latex office extras fonts localbin remote robotics disk"
-    @echo "company: placeholder"
+    @python3 -c 'import ast; [print(f"{n}:", *[k.value for x in ast.parse(open(f"layers/{n}.py").read()).body if isinstance(x, ast.Assign) and getattr(x.targets[0], "id", "") == "GROUPS" for k in x.value.keys]) for n in ("common", "personal", "company")]'
+

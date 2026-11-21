@@ -6,7 +6,7 @@
 
 选择性执行:
     只跑几组: --data only=zsh,cli
-    跳过几组: --data skip=latex,media
+    跳过几组: --data skip=latex,software
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ LAYERS = {
 # 优先执行的组, 按此顺序最先跑, 其余组随后按各层 GROUPS 的定义顺序跑.
 # 目标是部署没跑完就能开始干活: 镜像源与系统升级 → 构建工具 (AUR 依赖
 # base-devel) → 浏览器 (先登录账号, 自己搜索下载) → 输入法 → claude
-# → 即时通讯 → 办公. 当前 profile 没有的组跳过
-PRIORITY = ["pacman", "dev", "browser", "input", "claude", "im", "wps", "office"]
+# → 桌面应用 (含即时通讯与 WPS) → 个人软件 (含办公). 当前 profile 没有的组跳过
+PRIORITY = ["pacman", "dev", "browser", "input", "claude", "apps", "software"]
 
 
 def main():
