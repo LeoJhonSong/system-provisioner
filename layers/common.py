@@ -513,13 +513,17 @@ DOCKER_SUBVOLS = {
 # 已是挂载点 (拆过子卷, 或手动挂到了别的盘) 就什么都不做. 不是目录或是软链
 # 也跳过: 说明 docker 数据已经被手动挪出系统盘 (如 .99 挪到 /data), 不能把
 # 别处的数据拷回系统盘. 包里不带这两个目录, 新机器要等 docker 首次启动建出
-# 来后, 下次部署才会迁. 否则: 停掉正在跑的 docker/containerd → 挂顶层 (subvolid=5) 建子卷 →
+# 来后, 下次部署才会迁. 否则: 停 docker/containerd → 挂顶层 (subvolid=5) 建子卷 →
 # cp --reflink 搬数据 (同盘只复制元数据, 秒完且不多占空间) → 写 fstab →
 # 原目录挪开换空目录挂上 → 删原目录 → 把停掉的服务再拉起来 (原来没跑的不拉).
 # 子卷建在父目录所在的 btrfs 上 (即根), fstab 挂载选项沿用该挂载点那行 (去掉
 # 其中的 subvol/subvolid), 与 @cache @log 一致.
 # 中断后重跑: 原目录在挂好之前一直保留 (挪开的叫 .pre-subvol, 重跑先挪回来),
-# 没挂上的半成品子卷删了重建, 所以不会丢数据
+# 没挂上的半成品子卷删了重建, 所以不会丢数据.
+# 停服务要分两步, 先 dockerd 后 containerd: 一起停时 containerd 可能先没了,
+# dockerd 停不掉容器; containerd.service 又是 KillMode=process, 不杀 shim, 容器
+# 成了孤儿还挂着 rootfs/overlayfs/<id>, cp 钻进去 reflink 报 Invalid
+# cross-device link (.102 上踩过). 停完再查一遍目录下没有挂载才拷, cp -x 再兜底
 SUBVOL_MIGRATE_SCRIPT = r"""set -eu
 P={path} S={subvol}
 old="$P.pre-subvol"
@@ -532,7 +536,14 @@ if [ -L "$P" ] || [ ! -d "$P" ]; then
     echo "$P 不是系统盘上的目录, docker 数据已不在系统盘, 跳过" >&2; exit 0
 fi
 units=$(systemctl list-units --state=active --plain --no-legend docker.socket docker.service containerd.service | awk '{{print $1}}')
-[ -z "$units" ] || systemctl stop $units
+systemctl stop docker.socket docker.service
+systemctl stop containerd.service
+if findmnt -rn -o TARGET | grep -q "^$P/"; then
+    echo "$P 下还有挂载 (容器没停干净), 不迁:" >&2
+    findmnt -rn -o TARGET | grep "^$P/" >&2
+    [ -z "$units" ] || systemctl start $units
+    exit 1
+fi
 parent=$(dirname "$P")
 src=$(findmnt -no SOURCE -T "$parent" | sed 's/\[.*//')
 uuid=$(findmnt -no UUID -T "$parent")
@@ -545,7 +556,7 @@ trap 'umount "$top" 2>/dev/null || true; rmdir "$top" 2>/dev/null || true' EXIT
 mount -o subvolid=5 "$src" "$top"
 [ -e "$top/$S" ] && btrfs subvolume delete "$top/$S"
 btrfs subvolume create "$top/$S"
-cp -a --reflink=always "$P/." "$top/$S/"
+cp -ax --reflink=always "$P/." "$top/$S/"
 chmod --reference="$P" "$top/$S"
 umount "$top"
 echo "UUID=$uuid $P btrfs subvol=/$S${{opts:+,$opts}} 0 0" >> /etc/fstab
