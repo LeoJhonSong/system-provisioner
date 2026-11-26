@@ -347,8 +347,6 @@ def sddm_x11():
     )
 
 
-SKILLS_REPO_URL = "https://github.com/LeoJhonSong/skills"
-
 # 把 argv[2] 的 JSON 深合并进 argv[1] (不存在则新建), 对象逐层合并, 其余类型整体替换,
 # 值为 null 表示删掉该键.
 # 无变化时不写盘. 经 python3 -c 用单引号包着传给 shell, 所以代码里只用双引号
@@ -383,23 +381,6 @@ def claude_tools():
     server.shell(
         name="装 claude-code",
         commands=["command -v claude || curl -fsSL https://claude.ai/install.sh | bash"],
-    )
-
-    # 各项目通用的技能放一个仓库, 直接检出在 ~/.claude/skills, 更新在该目录 git pull.
-    # 不用 git.repo: 目录里已有别处写进来的技能 (桌面应用同步的 synced/, dev-browser
-    # 自装的), git clone 不接受非空目录, 所以就地 init 再检出; 那些目录由仓库的
-    # .gitignore 忽略. 已是仓库则不动, 不替用户 pull
-    skills_dir = f"{home}/.claude/skills"
-    server.shell(
-        name="检出通用技能到 ~/.claude/skills",
-        commands=[
-            (
-                f'test -d "{skills_dir}/.git" || {{ '
-                f'mkdir -p "{skills_dir}" && cd "{skills_dir}" && '
-                f"git init -q -b main && git remote add origin {SKILLS_REPO_URL} && "
-                "git fetch -q origin main && git checkout -q -t origin/main; }"
-            )
-        ],
     )
 
     # cc-switch-cli 用官方脚本装预编译二进制 (装到 ~/.local/bin/cc-switch).
